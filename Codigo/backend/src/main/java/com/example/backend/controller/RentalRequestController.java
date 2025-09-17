@@ -1,44 +1,39 @@
 package com.example.backend.controller;
 
 import com.example.backend.model.RentalRequest;
-import com.example.backend.model.RequestStatus;
-import com.example.backend.repository.RentalRequestRepository;
+import com.example.backend.model.enums.RequestStatus;
+import com.example.backend.service.RentalRequestService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
-@RequestMapping("/requests")
+@RequestMapping("/api/requests")
 public class RentalRequestController {
-    private final RentalRequestRepository repo;
+    private final RentalRequestService service;
+    public RentalRequestController(RentalRequestService service) { this.service = service; }
 
-    public RentalRequestController(RentalRequestRepository repo) {
-        this.repo = repo;
+    @GetMapping public List<RentalRequest> all() { return service.findAll(); }
+
+    @GetMapping("/{id}") public ResponseEntity<RentalRequest> get(@PathVariable String id) {
+        RentalRequest r = service.findById(id);
+        return r == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(r);
     }
 
-    @GetMapping
-    public List<RentalRequest> all() { return repo.findAll(); }
-
-    @GetMapping("/{id}")
-    public RentalRequest get(@PathVariable String id) { return repo.findById(id).orElse(null); }
-
-    @PostMapping
-    public RentalRequest create(@RequestBody RentalRequest r) {
-        if (r.getId() == null || r.getId().isBlank()) r.setId(UUID.randomUUID().toString());
-        if (r.getStatus() == null) r.setStatus(RequestStatus.CREATED);
-        return repo.save(r);
+    @PostMapping public ResponseEntity<RentalRequest> create(@Valid @RequestBody RentalRequest r) {
+        return ResponseEntity.ok(service.create(r));
     }
 
-    @DeleteMapping("/{id}")
-    public void delete(@PathVariable String id) { repo.deleteById(id); }
-
-    // mudar status via PATCH
     @PatchMapping("/{id}/status")
-    public RentalRequest changeStatus(@PathVariable String id, @RequestParam RequestStatus status) {
-        return repo.findById(id).map(existing -> {
-            existing.setStatus(status);
-            return repo.save(existing);
-        }).orElse(null);
+    public ResponseEntity<RentalRequest> changeStatus(@PathVariable String id, @RequestParam RequestStatus status) {
+        RentalRequest updated = service.changeStatus(id, status);
+        return updated == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(updated);
+    }
+
+    @DeleteMapping("/{id}") public ResponseEntity<Void> delete(@PathVariable String id) {
+        service.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }

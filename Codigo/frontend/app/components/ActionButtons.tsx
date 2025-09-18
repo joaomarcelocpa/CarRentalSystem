@@ -49,7 +49,6 @@ const ActionButtons: React.FC = () => {
     const buttons = getButtonsForUserType(user.userType)
 
     const handleButtonClick = (buttonId: string) => {
-        // Por enquanto apenas log - futuramente será implementada a navegação
         console.log(`Clicou no botão: ${buttonId}`)
         alert(`Funcionalidade "${buttonId}" será implementada em breve!`)
     }

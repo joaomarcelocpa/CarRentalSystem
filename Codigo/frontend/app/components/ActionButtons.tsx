@@ -10,7 +10,7 @@ const ActionButtons: React.FC = () => {
     if (!user) {
         return (
             <div className="text-center py-8">
-                <p className="text-muted-foreground text-lg">Faça login para acessar as funcionalidades do sistema</p>
+                <p className="text-white/80 text-lg">Faça login para acessar as funcionalidades do sistema</p>
             </div>
         )
     }
@@ -57,8 +57,8 @@ const ActionButtons: React.FC = () => {
     return (
         <div className="w-full max-w-4xl mx-auto">
             <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold text-foreground mb-2">Painel de Controle</h2>
-                <p className="text-muted-foreground">Bem-vindo ao seu painel, {user.name}!</p>
+                <h2 className="text-3xl font-bold text-white mb-2 drop-shadow-lg">Painel de Controle</h2>
+                <p className="text-white/80 drop-shadow-md">Bem-vindo ao seu painel, {user.name}!</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -66,11 +66,11 @@ const ActionButtons: React.FC = () => {
                     <button
                         key={button.id}
                         onClick={() => handleButtonClick(button.id)}
-                        className="group bg-card hover:bg-accent border border-border rounded-xl p-6 transition-all duration-200 hover:shadow-lg hover:scale-105"
+                        className="group bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 rounded-xl p-6 transition-all duration-200 hover:shadow-lg hover:scale-105"
                     >
                         <div className="text-center">
                             <div className="text-4xl mb-4 group-hover:scale-110 transition-transform">{button.icon}</div>
-                            <h3 className="text-lg font-semibold text-card-foreground group-hover:text-accent-foreground">
+                            <h3 className="text-lg font-semibold text-white group-hover:text-blue-200">
                                 {button.label}
                             </h3>
                         </div>

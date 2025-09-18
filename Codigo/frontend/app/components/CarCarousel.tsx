@@ -67,7 +67,7 @@ const CarCarousel: React.FC = () => {
     }
 
     return (
-        <div className="relative w-full max-w-4xl mx-auto bg-card rounded-xl shadow-lg overflow-hidden">
+        <div className="relative w-full max-w-4xl mx-auto bg-white/10 backdrop-blur-md rounded-xl shadow-lg overflow-hidden border border-white/20">
             <div className="relative h-96 overflow-hidden">
                 {cars.map((car, index) => (
                     <div
@@ -81,12 +81,12 @@ const CarCarousel: React.FC = () => {
                             alt={`${car.brand} ${car.model}`}
                             className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                         <div className="absolute bottom-6 left-6 text-white">
-                            <h3 className="text-2xl font-bold">
+                            <h3 className="text-2xl font-bold drop-shadow-lg">
                                 {car.brand} {car.model}
                             </h3>
-                            <p className="text-lg">
+                            <p className="text-lg drop-shadow-md">
                                 {car.year} • R$ {car.price}/dia
                             </p>
                         </div>
@@ -97,7 +97,7 @@ const CarCarousel: React.FC = () => {
             {/* Navigation Arrows */}
             <button
                 onClick={prevSlide}
-                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
             >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -105,7 +105,7 @@ const CarCarousel: React.FC = () => {
             </button>
             <button
                 onClick={nextSlide}
-                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors"
+                className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-2 rounded-full transition-colors backdrop-blur-sm"
             >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -118,7 +118,9 @@ const CarCarousel: React.FC = () => {
                     <button
                         key={index}
                         onClick={() => goToSlide(index)}
-                        className={`w-3 h-3 rounded-full transition-colors ${index === currentSlide ? "bg-white" : "bg-white/50"}`}
+                        className={`w-3 h-3 rounded-full transition-colors ${
+                            index === currentSlide ? "bg-white" : "bg-white/50"
+                        }`}
                     />
                 ))}
             </div>

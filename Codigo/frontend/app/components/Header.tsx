@@ -12,12 +12,12 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
     const { user, logout } = useAuth()
 
     return (
-        <header className="bg-primary text-primary-foreground shadow-lg">
+        <header className="bg-black/20 backdrop-blur-md text-white shadow-lg border-b border-white/10">
             <div className="container mx-auto px-4 py-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
-                        <div className="w-8 h-8 bg-primary-foreground rounded-full flex items-center justify-center">
-                            <span className="text-primary font-bold text-lg">R</span>
+                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <span className="text-white font-bold text-lg">R</span>
                         </div>
                         <h1 className="text-2xl font-bold">RentalCarSystem</h1>
                     </div>
@@ -25,19 +25,19 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                     <div className="flex items-center space-x-4">
                         {user ? (
                             <div className="flex items-center space-x-4">
-                <span className="text-sm">
-                  Olá, <span className="font-semibold">{user.name}</span>
-                  <span className="ml-2 px-2 py-1 bg-primary-foreground text-primary rounded-full text-xs">
-                    {user.userType === "cliente"
-                        ? "Cliente"
-                        : user.userType === "agente-empresa"
-                            ? "Agente Empresa"
-                            : "Agente Banco"}
-                  </span>
-                </span>
+                                <span className="text-sm">
+                                    Olá, <span className="font-semibold">{user.name}</span>
+                                    <span className="ml-2 px-2 py-1 bg-blue-600 text-white rounded-full text-xs">
+                                        {user.userType === "cliente"
+                                            ? "Cliente"
+                                            : user.userType === "agente-empresa"
+                                                ? "Agente Empresa"
+                                                : "Agente Banco"}
+                                    </span>
+                                </span>
                                 <button
                                     onClick={logout}
-                                    className="px-4 py-2 bg-destructive text-destructive-foreground rounded-lg hover:bg-destructive/90 transition-colors"
+                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
                                 >
                                     Sair
                                 </button>
@@ -46,13 +46,13 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                             <div className="flex space-x-3">
                                 <button
                                     onClick={onLoginClick}
-                                    className="px-6 py-2 bg-primary-foreground text-primary rounded-lg hover:bg-primary-foreground/90 transition-colors font-medium"
+                                    className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                                 >
                                     Login
                                 </button>
                                 <button
                                     onClick={onRegisterClick}
-                                    className="px-6 py-2 border-2 border-primary-foreground text-primary-foreground rounded-lg hover:bg-primary-foreground hover:text-primary transition-colors font-medium"
+                                    className="px-6 py-2 border-2 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-colors font-medium"
                                 >
                                     Cadastrar-se
                                 </button>

@@ -9,6 +9,7 @@ public class Income {
     @Id
     private String id;
 
+    @Column(name = "income_value")
     private Double value;
 
     @Enumerated(EnumType.STRING)

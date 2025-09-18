@@ -12,13 +12,20 @@ public class Automobile {
     private String id;
 
     private String registration;
+
+    @Column(name = "car_year")
     private int year;
+
     @NotBlank
     private String brand;
+
     @NotBlank
     private String model;
+
     private String licensePlate;
+
     private boolean available;
+
     @Min(0)
     private Double dailyRate;
 
@@ -29,7 +36,6 @@ public class Automobile {
 
     public boolean checkAvailability(LocalDate start, LocalDate end) {
         if (!available) return false;
-        // For simplicity: available flag controls availability
         return true;
     }
 
@@ -38,7 +44,6 @@ public class Automobile {
         return days * dailyRate;
     }
 
-    // getters/setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRegistration() { return registration; }

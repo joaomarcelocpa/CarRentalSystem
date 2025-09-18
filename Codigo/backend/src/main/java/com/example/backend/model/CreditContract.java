@@ -8,10 +8,15 @@ public class CreditContract {
     @Id
     private String id;
 
+    @Column(name = "contract_value")
     private Double value;
+
     private Double interestRate;
+
     private Integer term;
+
     private LocalDate grantDate;
+
     private String status;
 
     @OneToOne
@@ -26,7 +31,6 @@ public class CreditContract {
         return (value * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term));
     }
 
-    // getters/setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public Double getValue() { return value; }

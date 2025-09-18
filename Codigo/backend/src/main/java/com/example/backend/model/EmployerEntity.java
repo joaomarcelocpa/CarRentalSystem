@@ -15,7 +15,7 @@ public class EmployerEntity {
 
     @ManyToOne
     @JoinColumn(name = "customer_id")
-    private Customer customer;  // <--- ESTE CAMPO É O QUE O mappedBy ESPERA
+    private Customer customer;
 
     public EmployerEntity() {}
 
@@ -27,4 +27,6 @@ public class EmployerEntity {
     public void setCnpj(String cnpj) { this.cnpj = cnpj; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    public Customer getCustomer() { return customer; }
+    public void setCustomer(Customer customer) { this.customer = customer; }
 }

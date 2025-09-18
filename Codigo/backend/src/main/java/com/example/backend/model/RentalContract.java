@@ -10,6 +10,8 @@ public class RentalContract {
 
     private LocalDate startDate;
     private LocalDate endDate;
+
+    @Column (name = "contract_value")
     private Double value;
     private LocalDate signingDate;
     @Lob

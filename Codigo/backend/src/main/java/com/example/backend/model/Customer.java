@@ -5,10 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import java.util.List;
 
+
 @Entity
 public class Customer extends User {
-
-    private String id;
 
     @NotBlank
     private String name;
@@ -32,9 +31,6 @@ public class Customer extends User {
 
     public Customer() {}
 
-    // getters/setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }

@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
-import type { UserType } from "@/app/interfaces/user"
 
 interface LoginFormProps {
     onClose: () => void
@@ -13,7 +12,6 @@ interface LoginFormProps {
 const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSwitchToRegister }) => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [userType, setUserType] = useState<UserType>("cliente")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -25,11 +23,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSwitchToRegister }) =>
         setError("")
 
         try {
-            const success = await login(email, password, userType)
+            const success = await login(email, password)
             if (success) {
                 onClose()
             } else {
-                setError("Credenciais inválidas. Tente novamente.")
+                setError("Credenciais inválidas ou usuário não encontrado. Verifique seu email e senha.")
             }
         } catch (err) {
             setError("Erro ao fazer login. Tente novamente.")
@@ -71,6 +69,11 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSwitchToRegister }) =>
                                 placeholder="seu@email.com"
                                 required
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                Clientes: use seu email cadastrado<br/>
+                                Agentes empresa: use email @empresa.com ou @company.com<br/>
+                                Agentes banco: use email @banco.com ou @bank.com
+                            </p>
                         </div>
 
                         <div>
@@ -86,22 +89,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onClose, onSwitchToRegister }) =>
                                 placeholder="••••••••"
                                 required
                             />
-                        </div>
-
-                        <div>
-                            <label htmlFor="userType" className="block text-sm font-medium text-card-foreground mb-2">
-                                Tipo de Usuário
-                            </label>
-                            <select
-                                id="userType"
-                                value={userType}
-                                onChange={(e) => setUserType(e.target.value as UserType)}
-                                className="w-full px-3 py-2 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                            >
-                                <option value="cliente">Cliente</option>
-                                <option value="agente-empresa">Agente Empresa</option>
-                                <option value="agente-banco">Agente Banco</option>
-                            </select>
                         </div>
 
                         <button

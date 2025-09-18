@@ -2,15 +2,13 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useAuth } from "../../contexts/AuthContext"
-import type { UserType } from "@/app/interfaces/user"
+import { useAuth } from "../contexts/AuthContext"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const LoginPage: React.FC = () => {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
-    const [userType, setUserType] = useState<UserType>("cliente")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
 
@@ -23,7 +21,7 @@ const LoginPage: React.FC = () => {
         setError("")
 
         try {
-            const success = await login(email, password, userType)
+            const success = await login(email, password)
             if (success) {
                 router.push("/")
             } else {
@@ -86,6 +84,12 @@ const LoginPage: React.FC = () => {
                                 placeholder="seu@email.com"
                                 required
                             />
+                            <p className="text-xs text-white/60 mt-2">
+                                <strong>Para testar:</strong><br/>
+                                • Clientes: use qualquer email válido<br/>
+                                • Agentes empresa: use email com @empresa.com ou @company.com<br/>
+                                • Agentes banco: use email com @banco.com ou @bank.com
+                            </p>
                         </div>
 
                         <div>
@@ -101,22 +105,6 @@ const LoginPage: React.FC = () => {
                                 placeholder="••••••••"
                                 required
                             />
-                        </div>
-
-                        <div>
-                            <label htmlFor="userType" className="block text-sm font-medium text-white/90 mb-2">
-                                Tipo de Usuário
-                            </label>
-                            <select
-                                id="userType"
-                                value={userType}
-                                onChange={(e) => setUserType(e.target.value as UserType)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                            >
-                                <option value="cliente" className="bg-gray-800 text-white">Cliente</option>
-                                <option value="agente-empresa" className="bg-gray-800 text-white">Agente Empresa</option>
-                                <option value="agente-banco" className="bg-gray-800 text-white">Agente Banco</option>
-                            </select>
                         </div>
 
                         <button

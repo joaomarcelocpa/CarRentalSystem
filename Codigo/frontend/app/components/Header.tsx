@@ -12,7 +12,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
     const { user, logout } = useAuth()
 
     return (
-        <header className="bg-black/20 backdrop-blur-md text-white shadow-lg border-b border-white/10">
+        <header className="text-white shadow-sm">
             <div className="container mx-auto px-4 py-4">
                 <div className="flex justify-between items-center">
                     <div className="flex items-center space-x-2">
@@ -52,7 +52,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                                 </button>
                                 <button
                                     onClick={onRegisterClick}
-                                    className="px-6 py-2 border-2 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-colors font-medium"
+                                    className="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-blue-800 rounded-lg transition-colors font-medium"
                                 >
                                     Cadastrar-se
                                 </button>

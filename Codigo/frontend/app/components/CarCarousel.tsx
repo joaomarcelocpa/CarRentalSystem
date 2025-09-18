@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import type { Car } from "../types/car"
+import type { Car } from "@/app/interfaces/car"
 
 const CarCarousel: React.FC = () => {
     const [currentSlide, setCurrentSlide] = useState(0)

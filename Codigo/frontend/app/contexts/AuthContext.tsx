@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { createContext, useContext, useState, type ReactNode } from "react"
-import type { User, AuthContextType, UserType } from "../types/user"
+import type { User, AuthContextType, UserType } from "@/app/interfaces/user"
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 

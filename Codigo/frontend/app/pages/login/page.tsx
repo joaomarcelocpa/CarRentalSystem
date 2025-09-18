@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../../contexts/AuthContext"
-import type { UserType } from "../../types/user"
+import type { UserType } from "@/app/interfaces/user"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 

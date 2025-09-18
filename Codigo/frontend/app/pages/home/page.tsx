@@ -76,7 +76,7 @@ const HomePage: React.FC = () => {
                                         </button>
                                         <button
                                             onClick={handleRegisterClick}
-                                            className="px-8 py-3 border-2 border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white rounded-lg transition-colors font-medium text-lg"
+                                            className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-lg"
                                         >
                                             Criar Conta
                                         </button>
@@ -131,7 +131,7 @@ const HomePage: React.FC = () => {
                                     />
                                 </svg>
                             </div>
-                            <h3 className="text-xl font-semibold text-white mb-2">Suporte 24/7</h3>
+                            <h3 className="text-xl font-semibold text-white mb-2">Suporte 24h por dia</h3>
                             <p className="text-white/80">
                                 Nossa equipe está sempre disponível para ajudá-lo em qualquer situação.
                             </p>

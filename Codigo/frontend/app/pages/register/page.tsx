@@ -3,7 +3,7 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../../contexts/AuthContext"
-import type { UserType } from "../../types/user"
+import type { UserType } from "../../interfaces/user"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -67,8 +67,8 @@ const RegisterPage: React.FC = () => {
             <div className="absolute inset-0 bg-black/60 z-10"></div>
 
             {/* Conteúdo do registro */}
-            <div className="relative z-20 w-full max-w-md">
-                <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8">
+            <div className="relative z-20 w-full max-w-2xl">
+                <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8 lg:p-12">
                     {/* Logo/Título */}
                     <div className="text-center mb-8">
                         <div className="flex items-center justify-center mb-4">
@@ -76,8 +76,8 @@ const RegisterPage: React.FC = () => {
                                 <span className="text-white font-bold text-xl">R</span>
                             </div>
                         </div>
-                        <h1 className="text-3xl font-bold text-white mb-2">Cadastro</h1>
-                        <p className="text-white/80">Crie sua conta</p>
+                        <h1 className="text-4xl font-bold text-white">Criar Conta</h1>
+                        <p className="text-white/80 text-lg">Junte-se ao RentalCarSystem</p>
                     </div>
 
                     {error && (
@@ -86,7 +86,8 @@ const RegisterPage: React.FC = () => {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} className="space-y-5">
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                        {/* Nome completo */}
                         <div>
                             <label htmlFor="name" className="block text-sm font-medium text-white/90 mb-2">
                                 Nome Completo
@@ -96,12 +97,13 @@ const RegisterPage: React.FC = () => {
                                 id="name"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="Seu nome completo"
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
+                                placeholder="Digite seu nome completo"
                                 required
                             />
                         </div>
 
+                        {/* Email */}
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium text-white/90 mb-2">
                                 Email
@@ -111,44 +113,48 @@ const RegisterPage: React.FC = () => {
                                 id="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
                                 placeholder="seu@email.com"
                                 required
                             />
                         </div>
 
-                        <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">
-                                Senha
-                            </label>
-                            <input
-                                type="password"
-                                id="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="••••••••"
-                                required
-                                minLength={6}
-                            />
+                        {/* Grid para senhas lado a lado em telas maiores */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label htmlFor="password" className="block text-sm font-medium text-white/90 mb-2">
+                                    Senha
+                                </label>
+                                <input
+                                    type="password"
+                                    id="password"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
+                                    placeholder="Mínimo 6 caracteres"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
+
+                            <div>
+                                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-2">
+                                    Confirmar Senha
+                                </label>
+                                <input
+                                    type="password"
+                                    id="confirmPassword"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
+                                    placeholder="Digite a senha novamente"
+                                    required
+                                    minLength={6}
+                                />
+                            </div>
                         </div>
 
-                        <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-white/90 mb-2">
-                                Confirmar Senha
-                            </label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                placeholder="••••••••"
-                                required
-                                minLength={6}
-                            />
-                        </div>
-
+                        {/* Tipo de usuário */}
                         <div>
                             <label htmlFor="userType" className="block text-sm font-medium text-white/90 mb-2">
                                 Tipo de Usuário
@@ -157,7 +163,7 @@ const RegisterPage: React.FC = () => {
                                 id="userType"
                                 value={userType}
                                 onChange={(e) => setUserType(e.target.value as UserType)}
-                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+                                className="w-full px-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-base"
                             >
                                 <option value="cliente" className="bg-gray-800 text-white">Cliente</option>
                                 <option value="agente-empresa" className="bg-gray-800 text-white">Agente Empresa</option>
@@ -165,10 +171,11 @@ const RegisterPage: React.FC = () => {
                             </select>
                         </div>
 
+                        {/* Botão de envio */}
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent"
+                            className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 px-6 rounded-lg font-medium text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-transparent transform hover:scale-[1.02] active:scale-[0.98]"
                         >
                             {isLoading ? (
                                 <div className="flex items-center justify-center">
@@ -181,21 +188,25 @@ const RegisterPage: React.FC = () => {
                         </button>
                     </form>
 
-                    <div className="mt-8 text-center">
-                        <p className="text-white/80 text-sm">
+                    {/* Links de navegação */}
+                    <div className="mt-8 text-center space-y-4">
+                        <p className="text-white/80 text-base">
                             Já tem uma conta?{" "}
                             <Link
                                 href="/login"
-                                className="text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                className="text-blue-400 hover:text-blue-300 font-medium transition-colors underline decoration-2 underline-offset-2"
                             >
                                 Faça login
                             </Link>
                         </p>
                         <Link
                             href="/"
-                            className="inline-block mt-4 text-white/60 hover:text-white transition-colors text-sm"
+                            className="inline-flex items-center text-white/60 hover:text-white transition-colors text-sm group"
                         >
-                            ← Voltar ao início
+                            <svg className="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                            </svg>
+                            Voltar ao início
                         </Link>
                     </div>
                 </div>

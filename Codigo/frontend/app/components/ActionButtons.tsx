@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useAuth } from "../contexts/AuthContext"
-import type { UserType } from "../types/user"
+import type { UserType } from "@/app/interfaces/user"
 
 const ActionButtons: React.FC = () => {
     const { user } = useAuth()

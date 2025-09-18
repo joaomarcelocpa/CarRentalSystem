@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useAuth } from "../contexts/AuthContext"
+import { LogOut } from "lucide-react"
 
 interface HeaderProps {
     onLoginClick: () => void
@@ -27,8 +28,9 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                                 </span>
                                 <button
                                     onClick={logout}
-                                    className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors text-sm"
+                                    className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors text-sm"
                                 >
+                                    <LogOut className="w-4 h-4" />
                                     Sair
                                 </button>
                             </div>

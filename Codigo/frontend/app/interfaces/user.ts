@@ -1,4 +1,3 @@
-// app/interfaces/user.ts
 export type UserType = "cliente" | "agente-empresa" | "agente-banco"
 
 export interface User {
@@ -15,4 +14,11 @@ export interface AuthContextType {
     logout: () => void
     register: (name: string, email: string, password: string, userType: UserType) => Promise<boolean>
     isLoading?: boolean
+    clearAllData?: () => void
+    getRegisteredUsers?: () => Array<{
+        id: string
+        name: string
+        email: string
+        userType: UserType
+    }>
 }

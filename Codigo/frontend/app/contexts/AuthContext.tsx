@@ -5,8 +5,16 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import type { User, AuthContextType, UserType } from "@/app/interfaces/user"
 import { ApiService } from "@/app/services"
 import type { CustomerCreateDTO } from "@/app/types/customer"
-import type { AgentResponseDTO } from "@/app/types/agent"
-import type { Bank } from "@/app/types/bank"
+
+// Interface para dados de usuários no localStorage
+interface StoredUser {
+    id: string
+    name: string
+    email: string
+    userType: UserType
+    password: string // Armazenado apenas para demo - em produção, usar hash
+    isLoggedIn: boolean
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -26,18 +34,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
-    // Check for existing session on mount
+    // Chaves para o localStorage
+    const USERS_STORAGE_KEY = 'rental_system_users'
+    const CURRENT_USER_STORAGE_KEY = 'rental_current_user'
+
+    // Função para obter todos os usuários do localStorage
+    const getAllUsers = (): StoredUser[] => {
+        try {
+            const users = localStorage.getItem(USERS_STORAGE_KEY)
+            return users ? JSON.parse(users) : []
+        } catch (error) {
+            console.error('Error reading users from localStorage:', error)
+            return []
+        }
+    }
+
+    // Função para salvar todos os usuários no localStorage
+    const saveAllUsers = (users: StoredUser[]) => {
+        try {
+            localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users))
+        } catch (error) {
+            console.error('Error saving users to localStorage:', error)
+        }
+    }
+
+    // Função para salvar usuário atual
+    const saveCurrentUser = (user: User) => {
+        try {
+            localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(user))
+        } catch (error) {
+            console.error('Error saving current user:', error)
+        }
+    }
+
+    // Verificar sessão existente no mount
     useEffect(() => {
         const checkExistingSession = () => {
             try {
-                const savedUser = localStorage.getItem('rental_user')
+                const savedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY)
                 if (savedUser) {
                     const parsedUser = JSON.parse(savedUser)
                     setUser(parsedUser)
                 }
             } catch (error) {
                 console.error('Error checking existing session:', error)
-                localStorage.removeItem('rental_user')
+                localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
             } finally {
                 setIsLoading(false)
             }
@@ -50,53 +91,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             setIsLoading(true)
 
-            // First, try to find user in customers database
-            const customers = await ApiService.customer.getAllCustomers()
-            const existingCustomer = customers.find(c => c.emailContact === email)
+            const allUsers = getAllUsers()
+            const foundUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
 
-            if (existingCustomer) {
-                // User found as customer
-                const newUser: User = {
-                    id: existingCustomer.id,
-                    name: existingCustomer.name,
-                    email: existingCustomer.emailContact,
-                    userType: 'cliente',
+            if (foundUser) {
+                const loggedUser: User = {
+                    id: foundUser.id,
+                    name: foundUser.name,
+                    email: foundUser.email,
+                    userType: foundUser.userType,
                     isLoggedIn: true,
                 }
-                setUser(newUser)
-                localStorage.setItem('rental_user', JSON.stringify(newUser))
+
+                setUser(loggedUser)
+                saveCurrentUser(loggedUser)
                 return true
             }
 
-            // If not found in customers, check for agent types by email pattern or specific logic
-            // For demonstration, we'll use email domains to determine agent types
-            if (email.includes('@empresa.') || email.includes('@company.') || email.includes('@corp.')) {
-                const newUser: User = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    name: email.split("@")[0],
-                    email,
-                    userType: 'agente-empresa',
-                    isLoggedIn: true,
-                }
-                setUser(newUser)
-                localStorage.setItem('rental_user', JSON.stringify(newUser))
-                return true
-            }
-
-            if (email.includes('@banco.') || email.includes('@bank.')) {
-                const newUser: User = {
-                    id: Math.random().toString(36).substr(2, 9),
-                    name: email.split("@")[0],
-                    email,
-                    userType: 'agente-banco',
-                    isLoggedIn: true,
-                }
-                setUser(newUser)
-                localStorage.setItem('rental_user', JSON.stringify(newUser))
-                return true
-            }
-
-            // If no specific pattern is found, deny login
             return false
         } catch (error) {
             console.error('Login error:', error)
@@ -108,65 +119,136 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const logout = () => {
         setUser(null)
-        localStorage.removeItem('rental_user')
+        localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
     }
 
     const register = async (name: string, email: string, password: string, userType: UserType): Promise<boolean> => {
         try {
             setIsLoading(true)
 
+            if (!name.trim() || !email.trim() || !password.trim()) {
+                throw new Error('Todos os campos são obrigatórios')
+            }
+
+            if (password.length < 6) {
+                throw new Error('A senha deve ter pelo menos 6 caracteres')
+            }
+
+            if (!isValidEmail(email)) {
+                throw new Error('Formato de email inválido')
+            }
+
+            const allUsers = getAllUsers()
+            const existingUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase())
+
+            if (existingUser) {
+                throw new Error('Email já está em uso')
+            }
+
+            let userId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
+
             if (userType === 'cliente') {
-                // Check if customer already exists
-                const customers = await ApiService.customer.getAllCustomers()
-                const existingCustomer = customers.find(c => c.emailContact === email)
-
-                if (existingCustomer) {
-                    throw new Error('Email already exists')
-                }
-
-                // Create new customer
-                const customerData: CustomerCreateDTO = {
-                    name,
-                    emailContact: email,
-                }
-
-                const newCustomer = await ApiService.customer.createCustomer(customerData)
-
-                const newUser: User = {
-                    id: newCustomer.id,
-                    name: newCustomer.name,
-                    email: newCustomer.emailContact,
-                    userType,
-                    isLoggedIn: true,
-                }
-
-                setUser(newUser)
-                localStorage.setItem('rental_user', JSON.stringify(newUser))
-                return true
-            }
-
-            // For agent types, simulate registration
-            if (userType === 'agente-empresa' || userType === 'agente-banco') {
-                if (name && email && password) {
-                    const newUser: User = {
-                        id: Math.random().toString(36).substr(2, 9),
-                        name,
-                        email,
-                        userType,
-                        isLoggedIn: true,
+                try {
+                    const customerData: CustomerCreateDTO = {
+                        name: name.trim(),
+                        emailContact: email.trim(),
                     }
-                    setUser(newUser)
-                    localStorage.setItem('rental_user', JSON.stringify(newUser))
-                    return true
+
+                    const createdCustomer = await ApiService.customer.createCustomer(customerData)
+                    userId = createdCustomer.id
+                } catch (error) {
+                    console.error('Error creating customer in backend, using local ID:', error)
                 }
             }
 
-            return false
+            const newStoredUser: StoredUser = {
+                id: userId,
+                name: name.trim(),
+                email: email.trim().toLowerCase(),
+                userType,
+                password,
+                isLoggedIn: false
+            }
+
+            const updatedUsers = [...allUsers, newStoredUser]
+            saveAllUsers(updatedUsers)
+
+            const newUser: User = {
+                id: newStoredUser.id,
+                name: newStoredUser.name,
+                email: newStoredUser.email,
+                userType: newStoredUser.userType,
+                isLoggedIn: true,
+            }
+
+            setUser(newUser)
+            saveCurrentUser(newUser)
+            return true
         } catch (error) {
             console.error('Registration error:', error)
-            return false
+            throw error
         } finally {
             setIsLoading(false)
+        }
+    }
+
+    const isValidEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        return emailRegex.test(email)
+    }
+
+    const clearAllData = () => {
+        localStorage.removeItem(USERS_STORAGE_KEY)
+        localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+        setUser(null)
+    }
+
+    const getRegisteredUsers = () => {
+        return getAllUsers().map(user => ({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            userType: user.userType
+        }))
+    }
+
+    const addTestUsers = () => {
+        const testUsers: StoredUser[] = [
+            {
+                id: 'test-cliente-1',
+                name: 'João Cliente',
+                email: 'cliente@teste.com',
+                userType: 'cliente',
+                password: '123456',
+                isLoggedIn: false
+            },
+            {
+                id: 'test-empresa-1',
+                name: 'Maria Empresa',
+                email: 'agente@teste.com',
+                userType: 'agente-empresa',
+                password: '123456',
+                isLoggedIn: false
+            },
+            {
+                id: 'test-banco-1',
+                name: 'Pedro Banco',
+                email: 'banco@teste.com',
+                userType: 'agente-banco',
+                password: '123456',
+                isLoggedIn: false
+            }
+        ]
+
+        const existingUsers = getAllUsers()
+        const usersToAdd = testUsers.filter(testUser =>
+            !existingUsers.some(existing => existing.email === testUser.email)
+        )
+
+        if (usersToAdd.length > 0) {
+            const updatedUsers = [...existingUsers, ...usersToAdd]
+            saveAllUsers(updatedUsers)
+            console.log(`Adicionados ${usersToAdd.length} usuários de teste`)
         }
     }
 
@@ -176,6 +258,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         register,
         isLoading,
+        clearAllData,
+        getRegisteredUsers,
+        addTestUsers
+    } as AuthContextType & {
+        clearAllData: () => void
+        getRegisteredUsers: () => any[]
+        addTestUsers: () => void
     }
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

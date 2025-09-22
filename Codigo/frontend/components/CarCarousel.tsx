@@ -212,7 +212,7 @@ const CarCarousel: React.FC = () => {
 
             {/* Car count display */}
             <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
-                {cars.length} {cars.length === 1 ? 'veículo' : 'veículos'} disponível{cars.length !== 1 ? 'eis' : ''}
+                {cars.length} veículos disponíveis
             </div>
         </div>
     )

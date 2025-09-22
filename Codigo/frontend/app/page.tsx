@@ -60,7 +60,7 @@ const HomePage: React.FC = () => {
                         {user ? (
                             <ActionButtons />
                         ) : (
-                            <div className="text-center py-12 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
+                            <div className="text-center py-10 bg-white/10 backdrop-blur-md rounded-xl border border-white/20">
                                 <div className="max-w-2xl mx-auto px-6">
                                     <h2 className="text-3xl font-bold text-white mb-4">Bem-vindo ao RentalCarSystem</h2>
                                     <p className="text-white/80 text-lg mb-8">

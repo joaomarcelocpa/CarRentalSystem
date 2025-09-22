@@ -2,17 +2,14 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import type { UserType } from "@/shared/interfaces/user"
 import { Car, FileText, User, CheckCircle, Edit, CreditCard } from "lucide-react"
-import RentalRequestsList from "./RentalRequestsList"
 
 const ActionButtons: React.FC = () => {
     const { user } = useAuth()
     const router = useRouter()
-    const [showOrdersList, setShowOrdersList] = useState(false)
 
     if (!user) {
         return (
@@ -28,6 +25,14 @@ const ActionButtons: React.FC = () => {
 
     const handleEditProfile = () => {
         router.push('/edit-profile')
+    }
+
+    const handleViewOrders = () => {
+        router.push('/rental-requests')
+    }
+
+    const handleCreditContract = () => {
+        alert("Funcionalidade de contrato de crédito será implementada em breve!")
     }
 
     const getButtonsForUserType = (userType: UserType) => {
@@ -53,7 +58,7 @@ const ActionButtons: React.FC = () => {
                         id: "view-orders",
                         label: "Visualizar Pedidos",
                         icon: FileText,
-                        action: () => setShowOrdersList(true)
+                        action: handleViewOrders
                     },
                     ...baseButtons,
                 ]
@@ -64,13 +69,13 @@ const ActionButtons: React.FC = () => {
                         id: "evaluate-orders",
                         label: "Avaliar Pedidos",
                         icon: CheckCircle,
-                        action: () => setShowOrdersList(true)
+                        action: handleViewOrders
                     },
                     {
                         id: "modify-orders",
                         label: "Modificar Pedidos",
                         icon: Edit,
-                        action: () => setShowOrdersList(true)
+                        action: handleViewOrders
                     },
                     ...baseButtons,
                 ]
@@ -81,19 +86,19 @@ const ActionButtons: React.FC = () => {
                         id: "evaluate-orders",
                         label: "Avaliar Pedidos",
                         icon: CheckCircle,
-                        action: () => setShowOrdersList(true)
+                        action: handleViewOrders
                     },
                     {
                         id: "modify-orders",
                         label: "Modificar Pedidos",
                         icon: Edit,
-                        action: () => setShowOrdersList(true)
+                        action: handleViewOrders
                     },
                     {
                         id: "credit-contract",
                         label: "Conceder Contrato de Crédito",
                         icon: CreditCard,
-                        action: () => handleCreditContract()
+                        action: handleCreditContract
                     },
                     ...baseButtons,
                 ]
@@ -101,10 +106,6 @@ const ActionButtons: React.FC = () => {
             default:
                 return baseButtons
         }
-    }
-
-    const handleCreditContract = () => {
-        alert("Funcionalidade de contrato de crédito será implementada em breve!")
     }
 
     const buttons = getButtonsForUserType(user.userType)
@@ -137,14 +138,6 @@ const ActionButtons: React.FC = () => {
                     )
                 })}
             </div>
-
-            {/* Modal apenas para lista de pedidos */}
-            {showOrdersList && (
-                <RentalRequestsList
-                    onClose={() => setShowOrdersList(false)}
-                    userType={user.userType === 'cliente' ? 'customer' : 'agent'}
-                />
-            )}
         </div>
     )
 }

@@ -1,10 +1,9 @@
-// app/components/CustomerProfileForm.tsx
 "use client"
 
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../shared/services"
+import { ApiService } from "@/shared/services"
 import type { CustomerCreateDTO, CustomerResponseDTO } from "@/shared/types/customer"
 import { User, Mail, MapPin, Briefcase, FileText, X, Save } from "lucide-react"
 import { safeString } from "@/shared/utils/type-guards"

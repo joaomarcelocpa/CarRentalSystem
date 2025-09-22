@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import { ApiService } from "../../shared/services"
-import { User, Eye, EyeOff } from "lucide-react"
+import { User, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { safeString } from "@/shared/utils/type-guards"
 import Link from "next/link"
 
@@ -27,32 +27,66 @@ const EditProfilePage: React.FC = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
     useEffect(() => {
-        // Verificar se usuário está logado e é cliente
-        if (!user || user.userType !== 'cliente') {
+        // Verificar se usuário está logado (qualquer tipo)
+        if (!user) {
             router.push('/')
             return
         }
 
-        const fetchCustomerData = async () => {
+        const fetchUserData = async () => {
             try {
                 setLoading(true)
-                const customerData = await ApiService.customer.getCustomerById(user.id)
-                if (customerData) {
+
+                // Se for cliente, buscar dados do customer
+                if (user.userType === 'cliente') {
+                    try {
+                        const customerData = await ApiService.customer.getCustomerById(user.id)
+                        if (customerData) {
+                            setFormData(prev => ({
+                                ...prev,
+                                name: safeString(customerData.name, user.name),
+                                emailContact: safeString(customerData.emailContact, user.email)
+                            }))
+                        } else {
+                            // Se não encontrar dados do cliente, usar dados do usuário
+                            setFormData(prev => ({
+                                ...prev,
+                                name: user.name,
+                                emailContact: user.email
+                            }))
+                        }
+                    } catch (error) {
+                        console.error("Error fetching customer data:", error)
+                        // Usar dados do usuário como fallback
+                        setFormData(prev => ({
+                            ...prev,
+                            name: user.name,
+                            emailContact: user.email
+                        }))
+                    }
+                } else {
+                    // Para agentes, usar dados básicos do usuário
                     setFormData(prev => ({
                         ...prev,
-                        name: safeString(customerData.name, ""),
-                        emailContact: safeString(customerData.emailContact, "")
+                        name: user.name,
+                        emailContact: user.email
                     }))
                 }
             } catch (error) {
-                console.error("Error fetching customer data:", error)
+                console.error("Error loading user data:", error)
                 setError("Erro ao carregar dados do perfil")
+                // Usar dados básicos do usuário como fallback
+                setFormData(prev => ({
+                    ...prev,
+                    name: user.name,
+                    emailContact: user.email
+                }))
             } finally {
                 setLoading(false)
             }
         }
 
-        fetchCustomerData()
+        fetchUserData()
     }, [user, router])
 
     const handleInputChange = (field: string, value: string) => {
@@ -97,9 +131,8 @@ const EditProfilePage: React.FC = () => {
         setError("")
 
         try {
-            // Aqui você implementaria a lógica de mudança de senha
-            // Por enquanto, vou simular o sucesso
-            await new Promise(resolve => setTimeout(resolve, 1500)) // Simular delay da API
+            // Simular atualização de senha
+            await new Promise(resolve => setTimeout(resolve, 1500))
 
             alert("Senha alterada com sucesso!")
             router.push('/')
@@ -111,8 +144,26 @@ const EditProfilePage: React.FC = () => {
         }
     }
 
-    if (!user || user.userType !== 'cliente') {
-        return null // Redirecionamento acontece no useEffect
+    const handleGoBack = () => {
+        router.push('/')
+    }
+
+    const getUserTypeLabel = (userType: string) => {
+        switch (userType) {
+            case 'cliente':
+                return 'Cliente'
+            case 'agente-empresa':
+                return 'Agente Empresa'
+            case 'agente-banco':
+                return 'Agente Banco'
+            default:
+                return 'Usuário'
+        }
+    }
+
+    // Se não há usuário, não renderizar nada (redirecionamento vai acontecer)
+    if (!user) {
+        return null
     }
 
     return (
@@ -123,13 +174,13 @@ const EditProfilePage: React.FC = () => {
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-cover z-0"
+                className="fixed inset-0 w-full h-full object-cover z-0"
             >
                 <source src="/wallpaper.mp4" type="video/mp4" />
             </video>
 
             {/* Overlay escuro */}
-            <div className="absolute inset-0 bg-black/60 z-10"></div>
+            <div className="fixed inset-0 bg-black/60 z-10"></div>
 
             {/* Conteúdo do formulário */}
             <div className="relative z-20 w-full max-w-md">
@@ -137,20 +188,28 @@ const EditProfilePage: React.FC = () => {
                     <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8">
                         <div className="text-center">
                             <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto mb-4"></div>
-                            <div className="text-xl text-white">Carregando dados do perfil...</div>
+                            <div className="text-xl text-white drop-shadow-lg">Carregando dados do perfil...</div>
                         </div>
                     </div>
                 ) : (
                     <div className="bg-white/10 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 p-8">
-                        {/* Logo/Título */}
-                        <div className="text-center mb-8">
-                            <div className="flex items-center justify-center mb-4">
-                                <div className="w-12 h-12 bg-transparent rounded-full flex items-center justify-center">
-                                    <User className="text-blue-500 font-bold text-xl w-12 h-12" />
+                        {/* Header com botão de voltar */}
+                        <div className="flex items-center justify-between mb-6">
+                            <button
+                                onClick={handleGoBack}
+                                className="text-white hover:bg-white/10 p-2 rounded-full transition-colors"
+                            >
+                                <ArrowLeft className="w-6 h-6" />
+                            </button>
+                            <div className="flex-1 text-center">
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="w-12 h-12 bg-transparent rounded-full flex items-center justify-center">
+                                        <User className="text-blue-500 font-bold text-xl w-12 h-12" />
+                                    </div>
                                 </div>
+                                <h1 className="text-3xl font-bold text-white drop-shadow-lg">Editar Perfil</h1>
                             </div>
-                            <h1 className="text-3xl font-bold text-white">Editar Perfil</h1>
-                            <p className="text-white/80">Altere sua senha de acesso</p>
+                            <div className="w-10"></div> {/* Espaçador para centralizar */}
                         </div>
 
                         {error && (

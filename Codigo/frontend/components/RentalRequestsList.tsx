@@ -4,16 +4,13 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../shared/services"
+import { ApiService } from "@/shared/services"
 import type { RentalRequest } from "@/shared/types/rental-request"
 import { RequestStatus } from "@/shared/types/rental-request"
-import { Calendar, Car, Clock, DollarSign, Eye, X, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
+import { Calendar, Car, Clock, Eye, X, CheckCircle, XCircle, AlertTriangle } from "lucide-react"
 import {
     getCustomerDisplayName,
     getAutomobileDisplayName,
-    formatCurrency,
-    formatDate,
-    getStatusLabel,
     calculateDaysBetween,
     safeNumber
 } from "@/shared/utils/type-guards"

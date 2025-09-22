@@ -3,10 +3,10 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../shared/services"
+import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
 import type { RentalRequest } from "@/shared/types/rental-request"
-import { Calendar, Car, Clock, DollarSign, X } from "lucide-react"
+import { Calendar, Car, DollarSign, X } from "lucide-react"
 
 interface RentalRequestFormProps {
     onClose: () => void

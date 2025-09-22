@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../../shared/services"
+import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
 import { formatCurrency, safeNumber } from "@/shared/utils/type-guards"
 import { Car, Star, Fuel, Users, Cog, Info, ArrowLeft } from "lucide-react"
@@ -126,7 +126,7 @@ const CarSelectionPage: React.FC = () => {
         setSelectedCar(null)
     }
 
-    const handleRentalSuccess = (request: RentalRequest) => {
+    const handleRentalSuccess = () => {
         setShowConfirmationModal(false)
         setSelectedCar(null)
         alert("Solicitação de aluguel enviada com sucesso!")

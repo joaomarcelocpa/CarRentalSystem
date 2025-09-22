@@ -3,14 +3,13 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../shared/services"
+import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
 import type { RentalRequest } from "@/shared/types/rental-request"
 import {
     Calendar,
     X,
     CheckCircle,
-    Star,
     Fuel,
     Users,
     Cog,
@@ -33,7 +32,7 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                                                              onSuccess
                                                                          }) => {
     const { user } = useAuth()
-    const [startDate, setStartDate] = useState("")
+    const [startDate] = useState("")
     const [endDate, setEndDate] = useState("")
     const [observations, setObservations] = useState("")
     const [isLoading, setIsLoading] = useState(false)

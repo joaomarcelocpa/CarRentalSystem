@@ -1,7 +1,7 @@
 import type React from "react"
 import type { Metadata } from "next"
 import { Analytics } from "@vercel/analytics/next"
-import { AuthProvider } from "@/app/contexts/AuthContext"
+import { AuthProvider } from "@/shared/contexts/AuthContext"
 import { Suspense } from "react"
 import "./globals.css"
 

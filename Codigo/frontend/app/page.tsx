@@ -1,10 +1,10 @@
 "use client"
 
 import type React from "react"
-import Header from "@/app/components/Header"
-import CarCarousel from "@/app/components/CarCarousel"
-import ActionButtons from "@/app/components/ActionButtons"
-import { useAuth } from "@/app/contexts/AuthContext"
+import Header from "@/components/Header"
+import CarCarousel from "@/components/CarCarousel"
+import ActionButtons from "@/components/ActionButtons"
+import { useAuth } from "@/shared/contexts/AuthContext"
 import { useRouter } from "next/navigation"
 
 const HomePage: React.FC = () => {

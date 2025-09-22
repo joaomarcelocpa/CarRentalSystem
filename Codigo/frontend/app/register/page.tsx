@@ -2,8 +2,8 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useAuth } from "../contexts/AuthContext"
-import type { UserType } from "../interfaces/user"
+import { useAuth } from "@/shared/contexts/AuthContext"
+import type { UserType } from "@/shared/interfaces/user"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -76,7 +76,7 @@ const RegisterPage: React.FC = () => {
                                 <span className="text-white font-bold text-xl">R</span>
                             </div>
                         </div>
-                        <h1 className="text-4xl font-bold text-white">Criar Conta</h1>
+                        <h1 className="text-4xl font-bold text-white">Criar uma Conta</h1>
                         <p className="text-white/80 text-lg">Junte-se ao RentalCarSystem</p>
                     </div>
 

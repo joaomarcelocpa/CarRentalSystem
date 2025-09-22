@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { useAuth } from "../contexts/AuthContext"
+import { useAuth } from "@/shared/contexts/AuthContext"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
@@ -84,12 +84,6 @@ const LoginPage: React.FC = () => {
                                 placeholder="seu@email.com"
                                 required
                             />
-                            <p className="text-xs text-white/60 mt-2">
-                                <strong>Para testar:</strong><br/>
-                                • Clientes: use qualquer email válido<br/>
-                                • Agentes empresa: use email com @empresa.com ou @company.com<br/>
-                                • Agentes banco: use email com @banco.com ou @bank.com
-                            </p>
                         </div>
 
                         <div>

@@ -1,7 +1,6 @@
 package com.example.backend.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 
 @Entity
 public class Agent extends User {
@@ -9,7 +8,10 @@ public class Agent extends User {
     private String corporateReason;
     private String cnpj;
 
-    public Agent() {}
+    public Agent() {
+        super();
+        // Role será definido pelas subclasses
+    }
 
     public String getCorporateReason() { return corporateReason; }
     public void setCorporateReason(String corporateReason) { this.corporateReason = corporateReason; }

@@ -1,5 +1,6 @@
 package com.example.backend.model;
 
+import com.example.backend.model.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -9,7 +10,6 @@ import java.util.List;
 @Entity
 public class Customer extends User {
 
-    @NotBlank
     private String name;
 
     @Email
@@ -29,7 +29,10 @@ public class Customer extends User {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<EmployerEntity> employers;
 
-    public Customer() {}
+    public Customer() {
+        super();
+        this.role = UserRole.CUSTOMER;
+    }
 
 
     public String getName() { return name; }

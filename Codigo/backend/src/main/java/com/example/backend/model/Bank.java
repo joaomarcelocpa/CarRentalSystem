@@ -1,19 +1,16 @@
 package com.example.backend.model;
 
+import com.example.backend.model.enums.UserRole;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 
 @Entity
-public class Bank {
-    @Id
-    private String id;
-
+public class Bank extends User {
     private String bankCode;
 
-    public Bank() {}
-
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public Bank() {
+        super();
+        this.role = UserRole.AGENT_BANK;
+    }
 
     public String getBankCode() { return bankCode; }
     public void setBankCode(String bankCode) { this.bankCode = bankCode; }

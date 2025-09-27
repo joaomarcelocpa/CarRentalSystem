@@ -5,7 +5,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import type { UserType } from "@/shared/interfaces/user"
-import { Car, FileText, User, CheckCircle, Edit, CreditCard } from "lucide-react"
+import { Car, FileText, User, CheckCircle, Edit, CreditCard, Settings } from "lucide-react"
 
 const ActionButtons: React.FC = () => {
     const { user } = useAuth()
@@ -33,6 +33,10 @@ const ActionButtons: React.FC = () => {
 
     const handleCreditContract = () => {
         alert("Funcionalidade de contrato de crédito será implementada em breve!")
+    }
+
+    const handleManageAutomobiles = () => {
+        router.push('/automobile-management')
     }
 
     const getButtonsForUserType = (userType: UserType) => {
@@ -77,6 +81,12 @@ const ActionButtons: React.FC = () => {
                         icon: Edit,
                         action: handleViewOrders
                     },
+                    {
+                        id: "manage-automobiles",
+                        label: "Gerenciar Veículos",
+                        icon: Settings,
+                        action: handleManageAutomobiles
+                    },
                     ...baseButtons,
                 ]
 
@@ -93,6 +103,12 @@ const ActionButtons: React.FC = () => {
                         label: "Modificar Pedidos",
                         icon: Edit,
                         action: handleViewOrders
+                    },
+                    {
+                        id: "manage-automobiles",
+                        label: "Gerenciar Veículos",
+                        icon: Settings,
+                        action: handleManageAutomobiles
                     },
                     {
                         id: "credit-contract",

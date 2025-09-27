@@ -230,15 +230,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     role: userTypeToRole(userType)
                 }
 
-                const userResponse = await ApiService.auth.register(userCreateDTO)
+                const loginResponse = await ApiService.auth.register(userCreateDTO)
 
                 const newUser: User = {
-                    id: userResponse.id,
-                    name: userResponse.username,
-                    email: userResponse.email,
-                    userType: roleToUserType(userResponse.role),
+                    id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), // ID temporário
+                    name: loginResponse.username,
+                    email: loginResponse.email,
+                    userType: roleToUserType(loginResponse.role),
                     isLoggedIn: true,
                 }
+
+                // Salvar token JWT retornado pelo registro
+                ApiService.auth.setToken(loginResponse.token)
 
                 // Se for cliente, criar também o registro específico no Customer
                 if (userType === 'cliente') {

@@ -1,5 +1,5 @@
 # Multi-stage build para otimizar o tamanho da imagem
-FROM maven:3.9.6-openjdk-17-slim AS builder
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 
 # Definir diretório de trabalho
 WORKDIR /app
@@ -19,15 +19,14 @@ COPY src ./src
 RUN mvn clean package -DskipTests
 
 # Stage de produção
-FROM openjdk:17-jre-slim
+FROM eclipse-temurin:17-jre-alpine
 
 # Instalar dependências necessárias
-RUN apt-get update && apt-get install -y \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache \
+    curl
 
 # Criar usuário não-root para segurança
-RUN groupadd -r appuser && useradd -r -g appuser appuser
+RUN addgroup -g 1001 appuser && adduser -D -u 1001 -G appuser appuser
 
 # Definir diretório de trabalho
 WORKDIR /app

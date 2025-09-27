@@ -20,10 +20,6 @@ import com.example.backend.security.JwtTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -34,9 +30,6 @@ import java.util.UUID;
 public class AuthService {
 
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
-
-    @Autowired
-    private AuthenticationManager authenticationManager;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -57,23 +50,27 @@ public class AuthService {
     private JwtTokenProvider jwtTokenProvider;
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(),
-                loginRequest.getPassword()
-            )
-        );
+        // Buscar usuário por username ou email
+        Object user = findUserByUsernameOrEmail(loginRequest.getUsername());
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtTokenProvider.generateToken(authentication);
+        // Verificar senha
+        String storedPassword = getPassword(user);
+        if (!passwordEncoder.matches(loginRequest.getPassword(), storedPassword)) {
+            throw new RuntimeException("Credenciais inválidas");
+        }
 
-        Object user = findUserByUsername(loginRequest.getUsername());
+        // Criar autenticação manual
+        String username = getUsername(user);
+        UserRole role = getRole(user);
+
+        // Gerar token JWT manualmente
+        String jwt = jwtTokenProvider.generateTokenForUser(username, role);
 
         return new LoginResponseDTO(
             jwt,
-            getUsername(user),
+            username,
             getEmail(user),
-            getRole(user),
+            role,
             86400000L // 24 horas em millisegundos
         );
     }
@@ -155,10 +152,7 @@ public class AuthService {
         return response;
     }
 
-    public UserResponseDTO getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String username = authentication.getName();
-        
+    public UserResponseDTO getCurrentUser(String username) {
         Object user = findUserByUsername(username);
 
         return new UserResponseDTO(
@@ -174,17 +168,57 @@ public class AuthService {
         // Tentar encontrar em cada repositório
         var customer = customerRepository.findByUsername(username);
         if (customer.isPresent()) return customer.get();
-        
+
         var companyAgent = companyAgentRepository.findByUsername(username);
         if (companyAgent.isPresent()) return companyAgent.get();
-        
+
         var bankAgent = bankAgentRepository.findByUsername(username);
         if (bankAgent.isPresent()) return bankAgent.get();
-        
+
         var bank = bankRepository.findByUsername(username);
         if (bank.isPresent()) return bank.get();
 
         throw new UserNotFoundException("Usuário não encontrado");
+    }
+
+    private Object findUserByUsernameOrEmail(String identifier) {
+        logger.info("Searching for user with identifier: {}", identifier);
+        // Primeiro, tentar buscar por username
+        try {
+            logger.info("Trying to find user by username: {}", identifier);
+            Object user = findUserByUsername(identifier);
+            logger.info("Found user by username: {}", user.getClass().getSimpleName());
+            return user;
+        } catch (UserNotFoundException e) {
+            logger.info("User not found by username, trying by email: {}", identifier);
+            // Se não encontrou por username, tentar por email
+            Object user = findUserByEmail(identifier);
+            logger.info("Found user by email: {}", user.getClass().getSimpleName());
+            return user;
+        }
+    }
+
+    private Object findUserByEmail(String email) {
+        logger.info("Searching for user by email: {}", email);
+        // Tentar encontrar por email em cada repositório
+        var customer = customerRepository.findByEmail(email);
+        logger.info("Customer search result: {}", customer.isPresent() ? "found" : "not found");
+        if (customer.isPresent()) return customer.get();
+
+        var companyAgent = companyAgentRepository.findByEmail(email);
+        logger.info("CompanyAgent search result: {}", companyAgent.isPresent() ? "found" : "not found");
+        if (companyAgent.isPresent()) return companyAgent.get();
+
+        var bankAgent = bankAgentRepository.findByEmail(email);
+        logger.info("BankAgent search result: {}", bankAgent.isPresent() ? "found" : "not found");
+        if (bankAgent.isPresent()) return bankAgent.get();
+
+        var bank = bankRepository.findByEmail(email);
+        logger.info("Bank search result: {}", bank.isPresent() ? "found" : "not found");
+        if (bank.isPresent()) return bank.get();
+
+        logger.warn("No user found with email: {}", email);
+        throw new UserNotFoundException("Usuário não encontrado com email: " + email);
     }
 
     private Object createUserByRole(UserCreateDTO dto) {
@@ -276,6 +310,14 @@ public class AuthService {
         if (user instanceof CompanyAgent agent) return agent.getEmail();
         if (user instanceof BankAgent agent) return agent.getEmail();
         if (user instanceof Bank bank) return bank.getEmail();
+        return null;
+    }
+
+    private String getPassword(Object user) {
+        if (user instanceof Customer customer) return customer.getPassword();
+        if (user instanceof CompanyAgent agent) return agent.getPassword();
+        if (user instanceof BankAgent agent) return agent.getPassword();
+        if (user instanceof Bank bank) return bank.getPassword();
         return null;
     }
 

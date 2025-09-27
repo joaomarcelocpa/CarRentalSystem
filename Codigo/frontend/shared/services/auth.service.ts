@@ -3,8 +3,8 @@ import { API_CONFIG } from '@/shared/config/api';
 import type { UserCreateDTO, UserResponseDTO, LoginRequestDTO, LoginResponseDTO } from '@/shared/types/user';
 
 export class AuthService extends BaseApiService {
-    async register(userData: UserCreateDTO): Promise<UserResponseDTO> {
-        return this.post<UserResponseDTO>('/auth/register', userData);
+    async register(userData: UserCreateDTO): Promise<LoginResponseDTO> {
+        return this.post<LoginResponseDTO>('/auth/register', userData);
     }
 
     async login(credentials: LoginRequestDTO): Promise<LoginResponseDTO> {
@@ -24,7 +24,7 @@ export class AuthService extends BaseApiService {
         });
     }
 
-    private getToken(): string | null {
+    getToken(): string | null {
         return localStorage.getItem('auth_token');
     }
 

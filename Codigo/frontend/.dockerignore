@@ -1,0 +1,15 @@
+node_modules/
+.next/
+out/
+build/
+.git/
+.gitignore
+README.md
+.env*
+.vercel
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+Thumbs.db

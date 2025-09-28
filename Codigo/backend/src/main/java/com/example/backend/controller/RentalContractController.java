@@ -23,7 +23,7 @@ public class RentalContractController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<List<RentalContractResponseDTO>> getAllContracts() {
         List<RentalContract> contracts = service.findAll();
         List<RentalContractResponseDTO> response = contracts.stream()
@@ -33,7 +33,7 @@ public class RentalContractController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<RentalContractResponseDTO> getContract(@PathVariable String id) {
         return service.findById(id)
                 .map(this::convertToResponseDTO)
@@ -42,7 +42,7 @@ public class RentalContractController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<List<RentalContractResponseDTO>> getActiveContracts() {
         List<RentalContract> contracts = service.findActiveContracts();
         List<RentalContractResponseDTO> response = contracts.stream()
@@ -52,7 +52,7 @@ public class RentalContractController {
     }
 
     @GetMapping("/expiring")
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<List<RentalContractResponseDTO>> getExpiringContracts(
             @RequestParam(defaultValue = "30") int daysAhead) {
         List<RentalContract> contracts = service.findExpiringContracts(daysAhead);
@@ -63,7 +63,7 @@ public class RentalContractController {
     }
 
     @PostMapping("/from-request/{requestId}")
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<RentalContractResponseDTO> createFromRequest(@PathVariable String requestId) {
         try {
             RentalContract contract = service.createFromApprovedRequest(requestId);
@@ -74,7 +74,7 @@ public class RentalContractController {
     }
 
     @PutMapping("/{id}/renew")
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<RentalContractResponseDTO> renewContract(
             @PathVariable String id,
             @Valid @RequestBody ContractRenewalDTO renewalDTO) {
@@ -87,7 +87,7 @@ public class RentalContractController {
     }
 
     @PutMapping("/{id}/finalize")
-    @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<Void> finalizeContract(
             @PathVariable String id,
             @Valid @RequestBody ContractFinalizationDTO finalizationDTO) {
@@ -100,7 +100,7 @@ public class RentalContractController {
     }
 
     @GetMapping("/{id}/value")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<Map<String, Double>> getContractValue(@PathVariable String id) {
         try {
             double totalValue = service.calculateTotalContractValue(id);
@@ -111,14 +111,14 @@ public class RentalContractController {
     }
 
     @GetMapping("/{id}/status")
-    @PreAuthorize("hasRole('CUSTOMER') or hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<Map<String, Boolean>> getContractStatus(@PathVariable String id) {
         boolean isActive = service.isContractActive(id);
         return ResponseEntity.ok(Map.of("isActive", isActive));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('AGENT_BANK')")
+    @PreAuthorize("hasAuthority('PERM_CONTRACT_MANAGE')")
     public ResponseEntity<Void> deleteContract(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();

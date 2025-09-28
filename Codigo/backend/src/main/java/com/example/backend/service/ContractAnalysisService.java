@@ -34,7 +34,6 @@ public class ContractAnalysisService {
     public Map<String, Object> generateContractDashboard() {
         Map<String, Object> dashboard = new HashMap<>();
 
-        // Estatísticas de contratos de aluguel
         List<RentalContract> allRentalContracts = rentalContractRepository.findAll();
         List<RentalContract> activeRentalContracts = rentalContractRepository.findActiveContracts();
         List<RentalContract> expiringRentalContracts = rentalContractRepository.findExpiringContracts(30);
@@ -44,7 +43,6 @@ public class ContractAnalysisService {
         dashboard.put("expiringRentalContracts", expiringRentalContracts.size());
         dashboard.put("totalRentalRevenue", calculateTotalRentalRevenue(allRentalContracts));
 
-        // Estatísticas de contratos de crédito
         List<CreditContract> allCreditContracts = creditContractRepository.findAll();
         List<CreditContract> activeCreditContracts = creditContractRepository.findByStatus("ATIVO");
 
@@ -53,14 +51,13 @@ public class ContractAnalysisService {
         dashboard.put("totalCreditValue", calculateTotalCreditValue(activeCreditContracts));
         dashboard.put("totalCreditInterest", calculateTotalCreditInterest(activeCreditContracts));
 
-        // Estatísticas de pedidos
         List<RentalRequest> allRequests = rentalRequestRepository.findAll();
         dashboard.put("totalRequests", allRequests.size());
         dashboard.put("pendingRequests", countRequestsByStatus(allRequests, RequestStatus.UNDER_ANALYSIS));
         dashboard.put("approvedRequests", countRequestsByStatus(allRequests, RequestStatus.APPROVED));
         dashboard.put("rejectedRequests", countRequestsByStatus(allRequests, RequestStatus.REJECTED));
 
-        // Análise de automóveis
+
         List<Automobile> allAutomobiles = automobileRepository.findAll();
         dashboard.put("totalAutomobiles", allAutomobiles.size());
         dashboard.put("availableAutomobiles", countAvailableAutomobiles(allAutomobiles));
@@ -80,11 +77,9 @@ public class ContractAnalysisService {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.plusMonths(1).minusDays(1);
 
-        // Contratos de aluguel do mês
         List<RentalContract> monthlyRentalContracts = rentalContractRepository
                 .findBySigningDateBetween(startDate, endDate);
 
-        // Contratos de crédito do mês
         List<CreditContract> monthlyCreditContracts = creditContractRepository
                 .findByGrantDateBetween(startDate, endDate);
 
@@ -94,14 +89,11 @@ public class ContractAnalysisService {
         report.put("totalRentalRevenue", calculateTotalRentalRevenue(monthlyRentalContracts));
         report.put("totalCreditValue", calculateTotalCreditValue(monthlyCreditContracts));
 
-        // Análise de performance
         report.put("averageContractValue", calculateAverageRentalValue(monthlyRentalContracts));
         report.put("averageCreditValue", calculateAverageCreditValue(monthlyCreditContracts));
 
-        // Top clientes do mês
         report.put("topCustomers", getTopCustomersOfMonth(startDate, endDate));
 
-        // Análise de automóveis mais alugados
         report.put("topAutomobiles", getTopAutomobilesOfMonth(startDate, endDate));
 
         return report;
@@ -122,13 +114,11 @@ public class ContractAnalysisService {
         List<CreditContract> customerCredits = creditContractRepository.findByRentalRequestCustomer(customer);
         List<RentalContract> customerRentals = rentalContractRepository.findByRentalRequestCustomer(customer);
 
-        // Análise histórica
         analysis.put("totalCreditsUsed", customerCredits.size());
         analysis.put("totalRentalsCompleted", customerRentals.size());
         analysis.put("activeCredits", customerCredits.stream()
                 .mapToInt(credit -> "ATIVO".equals(credit.getStatus()) ? 1 : 0).sum());
 
-        // Análise financeira
         double totalCreditValue = customerCredits.stream()
                 .filter(credit -> "ATIVO".equals(credit.getStatus()))
                 .mapToDouble(CreditContract::getValue).sum();
@@ -136,7 +126,6 @@ public class ContractAnalysisService {
         analysis.put("currentCreditExposure", totalCreditValue);
         analysis.put("averageCreditValue", calculateAverageCreditValue(customerCredits));
 
-        // Score de risco (simplificado)
         int riskScore = calculateRiskScore(customer, customerCredits, customerRentals);
         analysis.put("riskScore", riskScore);
         analysis.put("riskLevel", getRiskLevel(riskScore));
@@ -170,8 +159,7 @@ public class ContractAnalysisService {
             Map<String, Object> monthProjection = new HashMap<>();
             LocalDate projectionDate = LocalDate.now().plusMonths(i);
 
-            // Estimativa conservadora (redução gradual por contratos que expiram)
-            double decayFactor = Math.pow(0.95, i); // 5% de redução por mês
+            double decayFactor = Math.pow(0.95, i);
             double projectedRental = currentMonthlyRental * decayFactor;
             double projectedCredit = currentMonthlyCredit * decayFactor;
 
@@ -203,7 +191,6 @@ public class ContractAnalysisService {
         List<Automobile> allAutomobiles = automobileRepository.findAll();
         List<RentalContract> allContracts = rentalContractRepository.findAll();
 
-        // Análise por marca
         Map<String, List<RentalContract>> contractsByBrand = allContracts.stream()
                 .filter(contract -> contract.getRentalRequest() != null &&
                         contract.getRentalRequest().getAutomobile() != null)
@@ -223,7 +210,6 @@ public class ContractAnalysisService {
 
         analysis.put("brandPerformance", brandAnalysis);
 
-        // Top 10 automóveis mais lucrativos
         List<Map<String, Object>> topAutomobiles = allContracts.stream()
                 .filter(contract -> contract.getRentalRequest() != null &&
                         contract.getRentalRequest().getAutomobile() != null)
@@ -248,7 +234,6 @@ public class ContractAnalysisService {
 
         analysis.put("topAutomobiles", topAutomobiles);
 
-        // Taxa de utilização
         long totalAutomobiles = allAutomobiles.size();
         long availableAutomobiles = allAutomobiles.stream()
                 .mapToLong(auto -> auto.isAvailable() ? 1 : 0).sum();
@@ -263,7 +248,6 @@ public class ContractAnalysisService {
         return analysis;
     }
 
-    // Métodos auxiliares privados
     private double calculateTotalRentalRevenue(List<RentalContract> contracts) {
         return contracts.stream().mapToDouble(RentalContract::getValue).sum();
     }
@@ -364,24 +348,20 @@ public class ContractAnalysisService {
     }
 
     private int calculateRiskScore(Customer customer, List<CreditContract> credits, List<RentalContract> rentals) {
-        int score = 100; // Score inicial
+        int score = 100;
 
-        // Penalizar por créditos ativos em excesso
         long activeCredits = credits.stream().filter(c -> "ATIVO".equals(c.getStatus())).count();
         if (activeCredits > 2) score -= 20;
         else if (activeCredits > 1) score -= 10;
 
-        // Penalizar por atrasos (verificar se há contratos em atraso)
         long overdueCredits = credits.stream()
                 .filter(c -> "ATIVO".equals(c.getStatus()) && c.isOverdue()).count();
         score -= (int) (overdueCredits * 30);
 
-        // Bonificar por histórico de contratos finalizados com sucesso
         long completedRentals = rentals.stream()
                 .filter(r -> "FINALIZADO".equals(r.getStatus())).count();
         score += Math.min((int) (completedRentals * 5), 20);
 
-        // Garantir que o score esteja entre 0 e 100
         return Math.max(0, Math.min(100, score));
     }
 

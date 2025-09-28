@@ -57,12 +57,10 @@ public class CreditContractService {
         Bank bank = bankRepository.findById(bankId)
                 .orElseThrow(() -> new IllegalArgumentException("Banco não encontrado"));
 
-        // Verificar se já existe contrato de crédito para este pedido
         if (creditRepository.existsByRentalRequest(request)) {
             throw new IllegalStateException("Já existe um contrato de crédito para este pedido");
         }
 
-        // Validar capacidade do banco para conceder crédito
         CreditContract tempContract = new CreditContract();
         tempContract.setValue(request.getEstimatedValue());
 
@@ -112,7 +110,6 @@ public class CreditContractService {
                     String.format("%.2f", expectedInstallment));
         }
 
-        // Atualizar informações de pagamento
         credit.setLastPaymentDate(LocalDate.now());
 
         return creditRepository.save(credit);
@@ -129,25 +126,20 @@ public class CreditContractService {
     }
 
     public boolean evaluateCreditworthiness(Customer customer, double requestedAmount) {
-        // Lógica simplificada de análise de crédito
         List<CreditContract> existingCredits = findByCustomer(customer);
 
-        // Verificar se cliente tem créditos ativos
         long activeCredits = existingCredits.stream()
                 .filter(credit -> "ATIVO".equals(credit.getStatus()))
                 .count();
 
         if (activeCredits > 3) {
-            return false; // Muitos créditos ativos
+            return false;
         }
-
-        // Verificar valor total dos créditos ativos
         double totalActiveCredit = existingCredits.stream()
                 .filter(credit -> "ATIVO".equals(credit.getStatus()))
                 .mapToDouble(CreditContract::getValue)
                 .sum();
 
-        // Limite total de crédito por cliente
         double maxCreditLimit = 200000.0;
 
         return (totalActiveCredit + requestedAmount) <= maxCreditLimit;

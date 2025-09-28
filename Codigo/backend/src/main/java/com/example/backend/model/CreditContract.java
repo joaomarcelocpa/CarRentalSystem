@@ -74,7 +74,7 @@ public class CreditContract {
 
         double monthlyRate = interestRate / 100.0;
         if (monthlyRate == 0) {
-            return value / term; // Se não há juros, divide igualmente
+            return value / term;
         }
 
         return (value * monthlyRate * Math.pow(1 + monthlyRate, term)) /

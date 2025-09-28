@@ -60,7 +60,6 @@ public class RentalContractService {
             throw new IllegalStateException("Apenas pedidos aprovados podem gerar contratos");
         }
 
-        // Verificar se já existe contrato para este pedido
         if (contractRepository.existsByRentalRequest(request)) {
             throw new IllegalStateException("Já existe um contrato para este pedido");
         }
@@ -74,14 +73,11 @@ public class RentalContractService {
         contract.setSigningDate(LocalDate.now());
         contract.setStatus("ATIVO");
 
-        // Gerar termos do contrato
         contract.setTerms(generateContractTerms(request));
 
-        // Marcar pedido como executado
         request.setStatus(RequestStatus.EXECUTED);
         requestRepository.save(request);
 
-        // Marcar automóvel como indisponível
         Automobile automobile = request.getAutomobile();
         automobile.setAvailable(false);
         automobileRepository.save(automobile);
@@ -98,7 +94,6 @@ public class RentalContractService {
             throw new IllegalArgumentException("Nova data de fim deve ser posterior à atual");
         }
 
-        // Calcular novo valor baseado na extensão
         long additionalDays = ChronoUnit.DAYS.between(contract.getEndDate(), newEndDate);
         Automobile automobile = contract.getRentalRequest().getAutomobile();
         double additionalValue = additionalDays * automobile.getDailyRate();
@@ -108,7 +103,6 @@ public class RentalContractService {
         contract.setRenewalCount((contract.getRenewalCount() != null ? contract.getRenewalCount() : 0) + 1);
         contract.setStatus("RENOVADO");
 
-        // Atualizar termos com informações de renovação
         String renewalTerms = "\n\n--- RENOVAÇÃO DO CONTRATO ---\n";
         renewalTerms += "Data da renovação: " + LocalDate.now() + "\n";
         renewalTerms += "Nova data de término: " + newEndDate + "\n";
@@ -125,17 +119,14 @@ public class RentalContractService {
         RentalContract contract = contractRepository.findById(contractId)
                 .orElseThrow(() -> new IllegalArgumentException("Contrato não encontrado"));
 
-        // Finalizar contrato usando o método da entidade
         contract.finalizeContract();
 
-        // Adicionar informações de finalização aos termos
         String finalizationTerms = "\n\n--- FINALIZAÇÃO DO CONTRATO ---\n";
         finalizationTerms += "Data de finalização: " + LocalDate.now() + "\n";
         finalizationTerms += "Contrato finalizado com sucesso.";
 
         contract.setTerms(contract.getTerms() + finalizationTerms);
 
-        // Salvar as alterações
         contractRepository.save(contract);
     }
 

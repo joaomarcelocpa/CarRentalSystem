@@ -31,13 +31,11 @@ public class RentalRequestService {
     public RentalRequest findById(String id) { return repo.findById(id).orElse(null); }
 
     public RentalRequest create(RentalRequest r) {
-        // basic validations
         if (r.getDesiredStartDate() == null || r.getDesiredEndDate() == null)
             throw new IllegalArgumentException("Start and end dates are required");
         if (r.getDesiredEndDate().isBefore(r.getDesiredStartDate()))
             throw new IllegalArgumentException("End date must be after start date");
 
-        // attach customer and automobile (if IDs provided)
         if (r.getCustomer() != null && r.getCustomer().getId() != null) {
             Customer c = customerRepo.findById(r.getCustomer().getId()).orElse(null);
             r.setCustomer(c);
@@ -61,7 +59,6 @@ public class RentalRequestService {
         return repo.findById(id).map(existing -> {
             existing.setStatus(status);
             if (status == RequestStatus.EXECUTED && existing.getAutomobile() != null) {
-                // mark automobile unavailable while rental active
                 Automobile a = existing.getAutomobile();
                 a.setAvailable(false);
                 autoRepo.save(a);

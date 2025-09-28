@@ -80,7 +80,7 @@ public class RentalContract {
     public Long getDurationInMonths() {
         if (startDate == null || endDate == null) return 0L;
         long days = ChronoUnit.DAYS.between(startDate, endDate);
-        return Math.max(1L, days / 30); // Pelo menos 1 mês
+        return Math.max(1L, days / 30);
     }
 
     /**
@@ -122,7 +122,6 @@ public class RentalContract {
         this.renewalCount = (this.renewalCount != null ? this.renewalCount : 0) + 1;
         this.status = "RENOVADO";
 
-        // Recalcular valor se necessário
         if (rentalRequest != null && rentalRequest.getAutomobile() != null) {
             Long totalDays = getDurationInDays();
             Double dailyRate = rentalRequest.getAutomobile().getDailyRate();
@@ -139,7 +138,6 @@ public class RentalContract {
     public void finalizeContract() {
         this.status = "FINALIZADO";
 
-        // Marcar automóvel como disponível
         if (rentalRequest != null && rentalRequest.getAutomobile() != null) {
             rentalRequest.getAutomobile().setAvailable(true);
         }
@@ -153,7 +151,6 @@ public class RentalContract {
         this.observations = (this.observations != null ? this.observations + "\n" : "") +
                 "Contrato cancelado em " + LocalDate.now() + ". Motivo: " + reason;
 
-        // Marcar automóvel como disponível
         if (rentalRequest != null && rentalRequest.getAutomobile() != null) {
             rentalRequest.getAutomobile().setAvailable(true);
         }

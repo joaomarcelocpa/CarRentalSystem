@@ -113,8 +113,7 @@ public class CreditContractController {
     public ResponseEntity<Map<String, Boolean>> evaluateCreditworthiness(
             @RequestBody Map<String, Object> request) {
         try {
-            // Em um sistema real, você buscaria o cliente pelo ID
-            Customer customer = new Customer(); // Implementar busca real
+            Customer customer = new Customer();
             Double requestedAmount = Double.valueOf(request.get("requestedAmount").toString());
 
             boolean approved = service.evaluateCreditworthiness(customer, requestedAmount);
@@ -148,7 +147,6 @@ public class CreditContractController {
         dto.setRemainingMonths(credit.getRemainingMonths());
         dto.setOverdue(credit.isOverdue());
 
-        // Converter dados do cliente
         if (credit.getRentalRequest() != null && credit.getRentalRequest().getCustomer() != null) {
             CustomerSummaryDTO customerDTO = new CustomerSummaryDTO();
             customerDTO.setId(credit.getRentalRequest().getCustomer().getId());
@@ -157,7 +155,6 @@ public class CreditContractController {
             dto.setCustomer(customerDTO);
         }
 
-        // Converter dados do banco
         if (credit.getGrantingBank() != null) {
             BankSummaryDTO bankDTO = new BankSummaryDTO();
             bankDTO.setId(credit.getGrantingBank().getId());

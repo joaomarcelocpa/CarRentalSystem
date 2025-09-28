@@ -124,7 +124,6 @@ public class RentalContractController {
         return ResponseEntity.noContent().build();
     }
 
-    // Método auxiliar para conversão
     private RentalContractResponseDTO convertToResponseDTO(RentalContract contract) {
         RentalContractResponseDTO dto = new RentalContractResponseDTO();
         dto.setId(contract.getId());
@@ -138,7 +137,6 @@ public class RentalContractController {
         dto.setDaysRemaining(contract.getDaysRemaining());
         dto.setCurrentlyActive(contract.isCurrentlyActive());
 
-        // Converter dados do cliente
         if (contract.getRentalRequest() != null && contract.getRentalRequest().getCustomer() != null) {
             CustomerSummaryDTO customerDTO = new CustomerSummaryDTO();
             customerDTO.setId(contract.getRentalRequest().getCustomer().getId());
@@ -147,7 +145,6 @@ public class RentalContractController {
             dto.setCustomer(customerDTO);
         }
 
-        // Converter dados do automóvel
         if (contract.getRentalRequest() != null && contract.getRentalRequest().getAutomobile() != null) {
             AutomobileSummaryDTO autoDTO = new AutomobileSummaryDTO();
             autoDTO.setId(contract.getRentalRequest().getAutomobile().getId());

@@ -38,7 +38,6 @@ public class ContractWorkflowService {
      */
     @Transactional
     public RentalContract processRentalRequestToContract(String requestId, String agentId) {
-        // 1. Buscar o pedido
         RentalRequest request = rentalRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
 
@@ -46,15 +45,12 @@ public class ContractWorkflowService {
             throw new IllegalStateException("Pedido deve estar em status CREATED para ser processado");
         }
 
-        // 2. Análise do pedido
         analyzeRentalRequest(request);
 
-        // 3. Aprovação automática baseada em critérios
         if (shouldApproveRequest(request)) {
             request.setStatus(RequestStatus.APPROVED);
             rentalRequestRepository.save(request);
 
-            // 4. Criar contrato de aluguel
             return createRentalContractFromRequest(request);
         } else {
             request.setStatus(RequestStatus.REJECTED);
@@ -69,7 +65,7 @@ public class ContractWorkflowService {
     @Transactional
     public RentalContract processRentalRequestWithCredit(String requestId, String bankId,
                                                          double interestRate, int termInMonths) {
-        // 1. Processar pedido normal
+
         RentalRequest request = rentalRequestRepository.findById(requestId)
                 .orElseThrow(() -> new IllegalArgumentException("Pedido não encontrado"));
 
@@ -77,21 +73,17 @@ public class ContractWorkflowService {
             throw new IllegalStateException("Pedido deve estar em status CREATED");
         }
 
-        // 2. Análise de crédito primeiro
         if (!analyzeCreditworthiness(request.getCustomer(), request.getEstimatedValue())) {
             request.setStatus(RequestStatus.REJECTED);
             rentalRequestRepository.save(request);
             throw new IllegalStateException("Cliente não aprovado para crédito");
         }
 
-        // 3. Criar contrato de crédito
         CreditContract creditContract = createCreditContract(request, bankId, interestRate, termInMonths);
 
-        // 4. Aprovar o pedido
         request.setStatus(RequestStatus.APPROVED);
         rentalRequestRepository.save(request);
 
-        // 5. Criar contrato de aluguel
         RentalContract rentalContract = createRentalContractFromRequest(request);
 
         return rentalContract;
@@ -105,15 +97,12 @@ public class ContractWorkflowService {
         RentalContract contract = rentalContractRepository.findById(contractId)
                 .orElseThrow(() -> new IllegalArgumentException("Contrato não encontrado"));
 
-        // Marcar contrato como finalizado (usando método correto)
         contract.finalizeContract();
 
-        // Adicionar observações sobre a finalização
         String finalizationNote = "Contrato finalizado em " + LocalDate.now() +
                 " - Motivo: " + finalizationReason;
         contract.setTerms(contract.getTerms() + "\n\n" + finalizationNote);
 
-        // Marcar automóvel como disponível
         if (contract.getRentalRequest() != null && contract.getRentalRequest().getAutomobile() != null) {
             Automobile automobile = contract.getRentalRequest().getAutomobile();
             automobile.setAvailable(true);
@@ -148,7 +137,7 @@ public class ContractWorkflowService {
             throw new IllegalStateException("Apenas créditos ativos podem ser liquidados");
         }
 
-        // Calcular valor de liquidação (com possível desconto)
+
         double remainingValue = calculateRemainingDebt(credit);
 
         if (liquidationAmount >= remainingValue) {
@@ -166,30 +155,24 @@ public class ContractWorkflowService {
      * Avalia se um pedido deve ser aprovado automaticamente
      */
     private boolean shouldApproveRequest(RentalRequest request) {
-        // Critérios para aprovação automática
 
-        // 1. Automóvel deve estar disponível
         if (request.getAutomobile() == null || !request.getAutomobile().isAvailable()) {
             return false;
         }
 
-        // 2. Valor estimado deve estar dentro do limite
         if (request.getEstimatedValue() == null || request.getEstimatedValue() > 50000) {
             return false;
         }
 
-        // 3. Cliente deve ter dados básicos
         Customer customer = request.getCustomer();
         if (customer == null || customer.getCpf() == null || customer.getName() == null) {
             return false;
         }
 
-        // 4. Período deve ser válido
         if (!request.validateDates()) {
             return false;
         }
 
-        // 5. Cliente não deve ter mais de 3 contratos ativos
         List<RentalContract> activeContracts = rentalContractRepository.findByRentalRequestCustomer(customer);
         long activeCount = activeContracts.stream()
                 .filter(contract -> "ATIVO".equals(contract.getStatus()) || "RENOVADO".equals(contract.getStatus()))
@@ -202,13 +185,11 @@ public class ContractWorkflowService {
      * Analisa um pedido de aluguel
      */
     private void analyzeRentalRequest(RentalRequest request) {
-        // Calcular valor estimado se não foi calculado
         if (request.getEstimatedValue() == null) {
             double calculatedValue = request.calculateValue();
             request.setEstimatedValue(calculatedValue);
         }
 
-        // Marcar como sob análise
         request.setStatus(RequestStatus.UNDER_ANALYSIS);
         rentalRequestRepository.save(request);
     }
@@ -219,23 +200,19 @@ public class ContractWorkflowService {
     private boolean analyzeCreditworthiness(Customer customer, Double requestedAmount) {
         if (customer == null || requestedAmount == null) return false;
 
-        // Verificar créditos ativos existentes
         List<CreditContract> existingCredits = creditContractRepository.findByRentalRequestCustomer(customer);
 
         long activeCredits = existingCredits.stream()
                 .filter(credit -> "ATIVO".equals(credit.getStatus()))
                 .count();
 
-        // Limite de 3 créditos ativos
         if (activeCredits >= 3) return false;
 
-        // Verificar valor total de crédito
         double totalActiveCredit = existingCredits.stream()
                 .filter(credit -> "ATIVO".equals(credit.getStatus()))
                 .mapToDouble(CreditContract::getValue)
                 .sum();
 
-        // Limite total de 200.000
         return (totalActiveCredit + requestedAmount) <= 200000.0;
     }
 
@@ -252,14 +229,11 @@ public class ContractWorkflowService {
         contract.setSigningDate(LocalDate.now());
         contract.setStatus("ATIVO");
 
-        // Gerar termos do contrato
         contract.setTerms(generateContractTerms(request));
 
-        // Marcar pedido como executado
         request.setStatus(RequestStatus.EXECUTED);
         rentalRequestRepository.save(request);
 
-        // Marcar automóvel como indisponível
         Automobile automobile = request.getAutomobile();
         automobile.setAvailable(false);
         automobileRepository.save(automobile);
@@ -292,7 +266,6 @@ public class ContractWorkflowService {
      * Verifica se um contrato deve ser renovado automaticamente
      */
     private boolean shouldAutoRenew(RentalContract contract) {
-        // Lógica para renovação automática (pode ser baseada em preferências do cliente)
         return contract.getRenewalCount() != null && contract.getRenewalCount() < 2;
     }
 

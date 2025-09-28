@@ -53,62 +53,51 @@ public class DataInitializer implements CommandLineRunner {
             return;
         }
 
-        Automobile car1 = new Automobile();
-        car1.setId(UUID.randomUUID().toString());
-        car1.setBrand("Toyota");
-        car1.setModel("Corolla");
-        car1.setYear(2023);
-        car1.setDailyRate(120.0);
-        car1.setAvailable(true);
-        car1.setRegistration("ABC-2023");
-        car1.setLicensePlate("ABC-1234");
-        automobileRepository.save(car1);
-
-        Automobile car2 = new Automobile();
-        car2.setId(UUID.randomUUID().toString());
-        car2.setBrand("Honda");
-        car2.setModel("Civic");
-        car2.setYear(2023);
-        car2.setDailyRate(130.0);
-        car2.setAvailable(true);
-        car2.setRegistration("DEF-2023");
-        car2.setLicensePlate("DEF-5678");
-        automobileRepository.save(car2);
-
-        Automobile car3 = new Automobile();
-        car3.setId(UUID.randomUUID().toString());
-        car3.setBrand("Volkswagen");
-        car3.setModel("Jetta");
-        car3.setYear(2022);
-        car3.setDailyRate(110.0);
-        car3.setAvailable(true);
-        car3.setRegistration("GHI-2022");
-        car3.setLicensePlate("GHI-9012");
-        automobileRepository.save(car3);
-
-        Automobile car4 = new Automobile();
-        car4.setId(UUID.randomUUID().toString());
-        car4.setBrand("Hyundai");
-        car4.setModel("Elantra");
-        car4.setYear(2023);
-        car4.setDailyRate(115.0);
-        car4.setAvailable(true);
-        car4.setRegistration("JKL-2023");
-        car4.setLicensePlate("JKL-3456");
-        automobileRepository.save(car4);
-
-        Automobile car5 = new Automobile();
-        car5.setId(UUID.randomUUID().toString());
-        car5.setBrand("Ford");
-        car5.setModel("Focus");
-        car5.setYear(2022);
-        car5.setDailyRate(105.0);
-        car5.setAvailable(false);
-        car5.setRegistration("MNO-2022");
-        car5.setLicensePlate("MNO-7890");
-        automobileRepository.save(car5);
+        // Carros econômicos
+        createAutomobile("Toyota", "Corolla", 2023, "ABC-1234", "TOY-2023", 150.0, true);
+        createAutomobile("Honda", "Civic", 2023, "DEF-5678", "HON-2023", 160.0, true);
+        createAutomobile("Volkswagen", "Jetta", 2022, "GHI-9012", "VW-2022", 140.0, true);
+        createAutomobile("Hyundai", "Elantra", 2023, "JKL-3456", "HYN-2023", 145.0, true);
+        createAutomobile("Ford", "Focus", 2022, "MNO-7890", "FOR-2022", 135.0, false);
+        
+        // Carros médios
+        createAutomobile("Toyota", "Camry", 2023, "PQR-1234", "CAM-2023", 200.0, true);
+        createAutomobile("Honda", "Accord", 2023, "STU-5678", "ACC-2023", 210.0, true);
+        createAutomobile("Nissan", "Altima", 2022, "VWX-9012", "ALT-2022", 190.0, true);
+        createAutomobile("Chevrolet", "Malibu", 2023, "YZA-3456", "MAL-2023", 185.0, true);
+        
+        // SUVs
+        createAutomobile("Toyota", "RAV4", 2023, "BCD-7890", "RAV-2023", 250.0, true);
+        createAutomobile("Honda", "CR-V", 2023, "EFG-1234", "CRV-2023", 260.0, true);
+        createAutomobile("Ford", "Escape", 2022, "HIJ-5678", "ESC-2022", 240.0, true);
+        createAutomobile("Nissan", "Rogue", 2023, "KLM-9012", "ROG-2023", 245.0, false);
+        
+        // Carros de luxo
+        createAutomobile("BMW", "320i", 2023, "NOP-3456", "BMW-2023", 350.0, true);
+        createAutomobile("Mercedes-Benz", "C200", 2023, "QRS-7890", "MB-2023", 380.0, true);
+        createAutomobile("Audi", "A4", 2023, "TUV-1234", "AUD-2023", 360.0, true);
+        
+        // Carros compactos
+        createAutomobile("Fiat", "Argo", 2023, "WXY-5678", "ARG-2023", 120.0, true);
+        createAutomobile("Renault", "Logan", 2022, "ZAB-9012", "LOG-2022", 110.0, true);
+        createAutomobile("Peugeot", "208", 2023, "CDE-3456", "208-2023", 125.0, true);
 
         System.out.println("Sample automobiles created successfully!");
+    }
+
+    private void createAutomobile(String brand, String model, int year, String licensePlate, 
+                                String registration, double dailyRate, boolean available) {
+        Automobile automobile = new Automobile();
+        automobile.setId(UUID.randomUUID().toString());
+        automobile.setBrand(brand);
+        automobile.setModel(model);
+        automobile.setYear(year);
+        automobile.setLicensePlate(licensePlate);
+        automobile.setRegistration(registration);
+        automobile.setDailyRate(dailyRate);
+        automobile.setAvailable(available);
+        automobile.setCreatedAt(LocalDate.now());
+        automobileRepository.save(automobile);
     }
 
     private void initializeCustomers() {
@@ -159,57 +148,92 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void initializeUsers() {
-        if (customerRepository.count() > 0) {
+        // Check if test users already exist by looking for specific usernames
+        if (customerRepository.existsByUsername("cliente.teste")) {
             return;
         }
 
-        // Cliente
-        Customer customer = new Customer();
-        customer.setId(UUID.randomUUID().toString());
-        customer.setUsername("cliente.teste");
-        customer.setEmail("cliente@teste.com");
-        customer.setPassword(passwordEncoder.encode("123456"));
-        customer.setName("João Cliente");
-        customer.setEmailContact("cliente@teste.com");
-        customer.setRg("12.345.678-9");
-        customer.setCpf("123.456.789-01");
-        customer.setAddress("Rua das Flores, 123");
-        customer.setProfession("Engenheiro");
-        customer.setCreatedAt(LocalDate.now());
-        customerRepository.save(customer);
+        // CLIENTES DE TESTE
+        createCustomer("cliente.teste", "cliente@teste.com", "João Cliente", 
+                      "12.345.678-9", "123.456.789-01", "Rua das Flores, 123", "Engenheiro");
+        createCustomer("maria.cliente", "maria@teste.com", "Maria Cliente", 
+                      "98.765.432-1", "987.654.321-09", "Avenida Paulista, 456", "Advogada");
+        createCustomer("pedro.cliente", "pedro@teste.com", "Pedro Cliente", 
+                      "11.222.333-4", "111.222.333-44", "Rua do Comércio, 789", "Designer");
 
-        // Agente Empresa
-        CompanyAgent companyAgent = new CompanyAgent();
-        companyAgent.setId(UUID.randomUUID().toString());
-        companyAgent.setUsername("agente.empresa");
-        companyAgent.setEmail("agente@teste.com");
-        companyAgent.setPassword(passwordEncoder.encode("123456"));
-        companyAgent.setCorporateReason("Empresa de Aluguel de Carros LTDA");
-        companyAgent.setCnpj("12.345.678/0001-90");
-        companyAgent.setCreatedAt(LocalDate.now());
-        companyAgentRepository.save(companyAgent);
+        // AGENTES DE EMPRESA
+        createCompanyAgent("agente.empresa", "agente@teste.com", 
+                          "Empresa de Aluguel de Carros LTDA", "12.345.678/0001-90");
+        createCompanyAgent("agente.empresa2", "agente2@teste.com", 
+                          "Locadora Premium LTDA", "23.456.789/0001-01");
+        createCompanyAgent("agente.empresa3", "agente3@teste.com", 
+                          "Auto Rental Express LTDA", "34.567.890/0001-12");
 
-        // Agente Banco
-        BankAgent bankAgent = new BankAgent();
-        bankAgent.setId(UUID.randomUUID().toString());
-        bankAgent.setUsername("agente.banco");
-        bankAgent.setEmail("banco@teste.com");
-        bankAgent.setPassword(passwordEncoder.encode("123456"));
-        bankAgent.setCorporateReason("Banco de Crédito LTDA");
-        bankAgent.setCnpj("98.765.432/0001-10");
-        bankAgent.setCreatedAt(LocalDate.now());
-        bankAgentRepository.save(bankAgent);
+        // AGENTES DE BANCO
+        createBankAgent("agente.banco", "banco@teste.com", 
+                       "Banco de Crédito LTDA", "98.765.432/0001-10");
+        createBankAgent("agente.banco2", "banco2@teste.com", 
+                       "Banco Financeiro S/A", "87.654.321/0001-21");
+        createBankAgent("agente.banco3", "banco3@teste.com", 
+                       "Banco CrediCar S/A", "76.543.210/0001-32");
 
-        // Banco
-        Bank bank = new Bank();
-        bank.setId(UUID.randomUUID().toString());
-        bank.setUsername("banco.sistema");
-        bank.setEmail("banco.sistema@teste.com");
-        bank.setPassword(passwordEncoder.encode("123456"));
-        bank.setBankCode("001");
-        bank.setCreatedAt(LocalDate.now());
-        bankRepository.save(bank);
+        // BANCOS DO SISTEMA
+        createBank("banco.sistema", "banco.sistema@teste.com", "001", "Banco Central do Sistema");
+        createBank("banco.principal", "banco.principal@teste.com", "002", "Banco Principal");
+        createBank("banco.secundario", "banco.secundario@teste.com", "003", "Banco Secundário");
 
         System.out.println("Sample users with roles created successfully!");
+    }
+
+    private void createCustomer(String username, String email, String name, String rg, 
+                              String cpf, String address, String profession) {
+        Customer customer = new Customer();
+        customer.setId(UUID.randomUUID().toString());
+        customer.setUsername(username);
+        customer.setEmail(email);
+        customer.setPassword(passwordEncoder.encode("123456"));
+        customer.setName(name);
+        customer.setEmailContact(email);
+        customer.setRg(rg);
+        customer.setCpf(cpf);
+        customer.setAddress(address);
+        customer.setProfession(profession);
+        customer.setCreatedAt(LocalDate.now());
+        customerRepository.save(customer);
+    }
+
+    private void createCompanyAgent(String username, String email, String corporateReason, String cnpj) {
+        CompanyAgent companyAgent = new CompanyAgent();
+        companyAgent.setId(UUID.randomUUID().toString());
+        companyAgent.setUsername(username);
+        companyAgent.setEmail(email);
+        companyAgent.setPassword(passwordEncoder.encode("123456"));
+        companyAgent.setCorporateReason(corporateReason);
+        companyAgent.setCnpj(cnpj);
+        companyAgent.setCreatedAt(LocalDate.now());
+        companyAgentRepository.save(companyAgent);
+    }
+
+    private void createBankAgent(String username, String email, String corporateReason, String cnpj) {
+        BankAgent bankAgent = new BankAgent();
+        bankAgent.setId(UUID.randomUUID().toString());
+        bankAgent.setUsername(username);
+        bankAgent.setEmail(email);
+        bankAgent.setPassword(passwordEncoder.encode("123456"));
+        bankAgent.setCorporateReason(corporateReason);
+        bankAgent.setCnpj(cnpj);
+        bankAgent.setCreatedAt(LocalDate.now());
+        bankAgentRepository.save(bankAgent);
+    }
+
+    private void createBank(String username, String email, String bankCode, String bankName) {
+        Bank bank = new Bank();
+        bank.setId(UUID.randomUUID().toString());
+        bank.setUsername(username);
+        bank.setEmail(email);
+        bank.setPassword(passwordEncoder.encode("123456"));
+        bank.setBankCode(bankCode);
+        bank.setCreatedAt(LocalDate.now());
+        bankRepository.save(bank);
     }
 }

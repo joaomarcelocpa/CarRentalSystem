@@ -2,6 +2,7 @@ package com.example.backend.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
+import com.example.backend.model.enums.UserRole;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,6 +34,12 @@ public class JwtTokenProvider {
 
     public String generateTokenFromUsername(String username) {
         Map<String, Object> claims = new HashMap<>();
+        return createToken(claims, username);
+    }
+
+    public String generateTokenForUser(String username, UserRole role) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("role", role.name());
         return createToken(claims, username);
     }
 

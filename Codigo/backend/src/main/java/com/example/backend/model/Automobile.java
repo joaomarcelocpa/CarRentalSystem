@@ -29,6 +29,9 @@ public class Automobile {
     @Min(0)
     private Double dailyRate;
 
+    @Column(name = "created_at")
+    private LocalDate createdAt;
+
     @OneToMany(mappedBy = "automobile", cascade = CascadeType.ALL)
     private List<RentalRequest> rentalRequests;
 
@@ -60,6 +63,9 @@ public class Automobile {
     public void setAvailable(boolean available) { this.available = available; }
     public Double getDailyRate() { return dailyRate; }
     public void setDailyRate(Double dailyRate) { this.dailyRate = dailyRate; }
+    public LocalDate getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
     public List<RentalRequest> getRentalRequests() { return rentalRequests; }
     public void setRentalRequests(List<RentalRequest> rentalRequests) { this.rentalRequests = rentalRequests; }
 }
+

@@ -5,8 +5,8 @@ import { useAuth } from "@/shared/contexts/AuthContext"
 import { LogOut } from "lucide-react"
 
 interface HeaderProps {
-    onLoginClick: () => void
-    onRegisterClick: () => void
+    onLoginClick?: () => void
+    onRegisterClick?: () => void
 }
 
 const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                                     Sair
                                 </button>
                             </div>
-                        ) : (
+                        ) : onLoginClick && onRegisterClick ? (
                             <div className="flex space-x-3">
                                 <button
                                     onClick={onLoginClick}
@@ -49,7 +49,7 @@ const Header: React.FC<HeaderProps> = ({ onLoginClick, onRegisterClick }) => {
                                     Cadastrar-se
                                 </button>
                             </div>
-                        )}
+                        ) : null}
                     </div>
                 </div>
             </div>

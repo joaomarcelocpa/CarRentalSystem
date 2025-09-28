@@ -5,6 +5,7 @@ import { createContext, useContext, useState, useEffect, type ReactNode } from "
 import type { User, AuthContextType, UserType } from "@/shared/interfaces/user"
 import { ApiService } from "@/shared/services"
 import type { CustomerCreateDTO } from "@/shared/types/customer"
+import type { UserCreateDTO, UserResponseDTO, UserRole } from "@/shared/types/user"
 
 // Interface para dados de usuários no localStorage
 interface StoredUser {
@@ -17,6 +18,34 @@ interface StoredUser {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
+
+// Função para converter UserType para UserRole
+const userTypeToRole = (userType: UserType): UserRole => {
+    switch (userType) {
+        case 'cliente':
+            return 'CUSTOMER';
+        case 'agente-empresa':
+            return 'AGENT_COMPANY';
+        case 'agente-banco':
+            return 'AGENT_BANK';
+        default:
+            throw new Error(`Invalid user type: ${userType}`);
+    }
+}
+
+// Função para converter UserRole para UserType
+const roleToUserType = (role: UserRole): UserType => {
+    switch (role) {
+        case 'CUSTOMER':
+            return 'cliente';
+        case 'AGENT_COMPANY':
+            return 'agente-empresa';
+        case 'AGENT_BANK':
+            return 'agente-banco';
+        default:
+            throw new Error(`Invalid role: ${role}`);
+    }
+}
 
 export const useAuth = () => {
     const context = useContext(AuthContext)
@@ -69,16 +98,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     // Verificar sessão existente no mount
     useEffect(() => {
-        const checkExistingSession = () => {
+        const checkExistingSession = async () => {
             try {
                 const savedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY)
-                if (savedUser) {
+                const token = ApiService.auth.getToken()
+                
+                if (savedUser && token) {
+                    // Verificar se o token ainda é válido tentando buscar dados do usuário
+                    try {
+                        const currentUser = await ApiService.auth.getCurrentUser()
+                        const parsedUser = JSON.parse(savedUser)
+                        
+                        // Atualizar dados do usuário com informações do backend
+                        const updatedUser: User = {
+                            id: currentUser.id,
+                            name: currentUser.username,
+                            email: currentUser.email,
+                            userType: roleToUserType(currentUser.role),
+                            isLoggedIn: true,
+                        }
+                        
+                        setUser(updatedUser)
+                        saveCurrentUser(updatedUser)
+                    } catch (tokenError) {
+                        console.warn('Token invalid, clearing session:', tokenError)
+                        // Token inválido, limpar sessão
+                        localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+                        ApiService.auth.removeToken()
+                    }
+                } else if (savedUser) {
+                    // Usuário salvo mas sem token (fallback para localStorage)
                     const parsedUser = JSON.parse(savedUser)
                     setUser(parsedUser)
                 }
             } catch (error) {
                 console.error('Error checking existing session:', error)
                 localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+                ApiService.auth.removeToken()
             } finally {
                 setIsLoading(false)
             }
@@ -91,24 +147,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         try {
             setIsLoading(true)
 
-            const allUsers = getAllUsers()
-            const foundUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
+            // Tentar login no backend primeiro
+            try {
+                const loginResponse = await ApiService.auth.login({
+                    username: email, // O backend usa username, mas estamos passando email
+                    password: password
+                })
 
-            if (foundUser) {
                 const loggedUser: User = {
-                    id: foundUser.id,
-                    name: foundUser.name,
-                    email: foundUser.email,
-                    userType: foundUser.userType,
+                    id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), // Gerar ID temporário
+                    name: loginResponse.username,
+                    email: loginResponse.email,
+                    userType: roleToUserType(loginResponse.role),
                     isLoggedIn: true,
                 }
+
+                // Salvar token
+                ApiService.auth.setToken(loginResponse.token)
 
                 setUser(loggedUser)
                 saveCurrentUser(loggedUser)
                 return true
-            }
+            } catch (backendError) {
+                console.warn('Backend login failed, trying local storage:', backendError)
+                
+                // Fallback para localStorage se o backend falhar
+                const allUsers = getAllUsers()
+                const foundUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
 
-            return false
+                if (foundUser) {
+                    const loggedUser: User = {
+                        id: foundUser.id,
+                        name: foundUser.name,
+                        email: foundUser.email,
+                        userType: foundUser.userType,
+                        isLoggedIn: true,
+                    }
+
+                    setUser(loggedUser)
+                    saveCurrentUser(loggedUser)
+                    return true
+                }
+
+                return false
+            }
         } catch (error) {
             console.error('Login error:', error)
             return false
@@ -120,6 +202,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const logout = () => {
         setUser(null)
         localStorage.removeItem(CURRENT_USER_STORAGE_KEY)
+        ApiService.auth.removeToken()
     }
 
     const register = async (name: string, email: string, password: string, userType: UserType): Promise<boolean> => {
@@ -138,52 +221,96 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 throw new Error('Formato de email inválido')
             }
 
-            const allUsers = getAllUsers()
-            const existingUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase())
-
-            if (existingUser) {
-                throw new Error('Email já está em uso')
-            }
-
-            let userId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
-
-            if (userType === 'cliente') {
-                try {
-                    const customerData: CustomerCreateDTO = {
-                        name: name.trim(),
-                        emailContact: email.trim(),
-                    }
-
-                    const createdCustomer = await ApiService.customer.createCustomer(customerData)
-                    userId = createdCustomer.id
-                } catch (error) {
-                    console.error('Error creating customer in backend, using local ID:', error)
+            // Tentar registro no backend primeiro
+            try {
+                const userCreateDTO: UserCreateDTO = {
+                    username: name.trim(), // Usando name como username
+                    email: email.trim(),
+                    password: password,
+                    role: userTypeToRole(userType)
                 }
+
+                const loginResponse = await ApiService.auth.register(userCreateDTO)
+
+                const newUser: User = {
+                    id: Math.random().toString(36).substr(2, 9) + Date.now().toString(36), // ID temporário
+                    name: loginResponse.username,
+                    email: loginResponse.email,
+                    userType: roleToUserType(loginResponse.role),
+                    isLoggedIn: true,
+                }
+
+                // Salvar token JWT retornado pelo registro
+                ApiService.auth.setToken(loginResponse.token)
+
+                // Se for cliente, criar também o registro específico no Customer
+                if (userType === 'cliente') {
+                    try {
+                        const customerData: CustomerCreateDTO = {
+                            name: name.trim(),
+                            emailContact: email.trim(),
+                        }
+                        await ApiService.customer.createCustomer(customerData)
+                    } catch (customerError) {
+                        console.warn('Error creating customer record:', customerError)
+                        // Não falha o registro se não conseguir criar o customer específico
+                    }
+                }
+
+                setUser(newUser)
+                saveCurrentUser(newUser)
+                return true
+            } catch (backendError) {
+                console.warn('Backend registration failed, trying local storage:', backendError)
+                
+                // Fallback para localStorage se o backend falhar
+                const allUsers = getAllUsers()
+                const existingUser = allUsers.find(u => u.email.toLowerCase() === email.toLowerCase())
+
+                if (existingUser) {
+                    throw new Error('Email já está em uso')
+                }
+
+                let userId = Math.random().toString(36).substr(2, 9) + Date.now().toString(36)
+
+                if (userType === 'cliente') {
+                    try {
+                        const customerData: CustomerCreateDTO = {
+                            name: name.trim(),
+                            emailContact: email.trim(),
+                        }
+
+                        const createdCustomer = await ApiService.customer.createCustomer(customerData)
+                        userId = createdCustomer.id
+                    } catch (error) {
+                        console.error('Error creating customer in backend, using local ID:', error)
+                    }
+                }
+
+                const newStoredUser: StoredUser = {
+                    id: userId,
+                    name: name.trim(),
+                    email: email.trim().toLowerCase(),
+                    userType,
+                    password,
+                    isLoggedIn: false
+                }
+
+                const updatedUsers = [...allUsers, newStoredUser]
+                saveAllUsers(updatedUsers)
+
+                const newUser: User = {
+                    id: newStoredUser.id,
+                    name: newStoredUser.name,
+                    email: newStoredUser.email,
+                    userType: newStoredUser.userType,
+                    isLoggedIn: true,
+                }
+
+                setUser(newUser)
+                saveCurrentUser(newUser)
+                return true
             }
-
-            const newStoredUser: StoredUser = {
-                id: userId,
-                name: name.trim(),
-                email: email.trim().toLowerCase(),
-                userType,
-                password,
-                isLoggedIn: false
-            }
-
-            const updatedUsers = [...allUsers, newStoredUser]
-            saveAllUsers(updatedUsers)
-
-            const newUser: User = {
-                id: newStoredUser.id,
-                name: newStoredUser.name,
-                email: newStoredUser.email,
-                userType: newStoredUser.userType,
-                isLoggedIn: true,
-            }
-
-            setUser(newUser)
-            saveCurrentUser(newUser)
-            return true
         } catch (error) {
             console.error('Registration error:', error)
             throw error

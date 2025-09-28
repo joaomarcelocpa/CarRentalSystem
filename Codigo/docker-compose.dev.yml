@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # Backend Spring Boot
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: rental-backend-dev
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      # Usar H2 em memória para desenvolvimento mais rápido
+      SPRING_DATASOURCE_URL: jdbc:h2:mem:testdb
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.h2.Driver
+      SPRING_DATASOURCE_USERNAME: sa
+      SPRING_DATASOURCE_PASSWORD: 
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
+      SPRING_JPA_SHOW_SQL: true
+      SPRING_H2_CONSOLE_ENABLED: true
+      APP_JWT_SECRET: mySecretKeyForDevelopment
+      APP_JWT_EXPIRATION: 86400000
+    volumes:
+      # Volume para logs
+      - backend_logs:/app/logs
+    networks:
+      - rental-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/test/public"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+
+  # Frontend Next.js com hot reload
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: base  # Usar stage de desenvolvimento
+    container_name: rental-frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:8080/api
+      WATCHPACK_POLLING: true  # Para hot reload em ambientes Docker
+    volumes:
+      # Volume para hot reload - mapear código fonte
+      - ./frontend:/app
+      - /app/node_modules  # Excluir node_modules do volume
+      - /app/.next         # Excluir build cache
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - rental-network
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  backend_logs:
+    driver: local
+
+networks:
+  rental-network:
+    driver: bridge

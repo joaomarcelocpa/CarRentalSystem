@@ -13,9 +13,13 @@ export class BaseApiService {
     ): Promise<T> {
         const url = `${this.baseUrl}${endpoint}`;
 
+        // Verificar se há token de autenticação
+        const token = localStorage.getItem('auth_token');
+        
         const defaultOptions: RequestInit = {
             headers: {
                 'Content-Type': 'application/json',
+                ...(token && { 'Authorization': `Bearer ${token}` }),
                 ...options.headers,
             },
         };

@@ -63,6 +63,9 @@ public class RentalRequestService {
         request.setCreatedAt(LocalDate.now());
         request.calculateTotalValue();
 
+        automobile.setAvailable(false);
+        automobileRepository.save(automobile);
+
         RentalRequest savedRequest = rentalRequestRepository.save(request);
         return convertToResponseDTO(savedRequest);
     }
@@ -164,19 +167,26 @@ public class RentalRequestService {
             request.setRejectionReason(dto.getRejectionReason());
         }
 
-        if (dto.getStatus() == RequestStatus.APPROVED || dto.getStatus() == RequestStatus.ACTIVE) {
-            Automobile automobile = request.getAutomobile();
-            automobile.setAvailable(false);
-            automobileRepository.save(automobile);
+        Automobile automobile = request.getAutomobile();
+
+        switch (dto.getStatus()) {
+            case APPROVED:
+            case UNDER_ANALYSIS:
+            case ACTIVE:
+                automobile.setAvailable(false);
+                break;
+
+            case REJECTED:
+            case CANCELLED:
+            case COMPLETED:
+                automobile.setAvailable(true);
+                break;
+
+            default:
+                break;
         }
 
-        if (dto.getStatus() == RequestStatus.REJECTED ||
-                dto.getStatus() == RequestStatus.CANCELLED ||
-                dto.getStatus() == RequestStatus.COMPLETED) {
-            Automobile automobile = request.getAutomobile();
-            automobile.setAvailable(true);
-            automobileRepository.save(automobile);
-        }
+        automobileRepository.save(automobile);
 
         RentalRequest updatedRequest = rentalRequestRepository.save(request);
         return convertToResponseDTO(updatedRequest);
@@ -198,11 +208,9 @@ public class RentalRequestService {
 
         request.setStatus(RequestStatus.CANCELLED);
 
-        if (request.getStatus() == RequestStatus.APPROVED || request.getStatus() == RequestStatus.ACTIVE) {
-            Automobile automobile = request.getAutomobile();
-            automobile.setAvailable(true);
-            automobileRepository.save(automobile);
-        }
+        Automobile automobile = request.getAutomobile();
+        automobile.setAvailable(true);
+        automobileRepository.save(automobile);
 
         RentalRequest updatedRequest = rentalRequestRepository.save(request);
         return convertToResponseDTO(updatedRequest);
@@ -220,6 +228,10 @@ public class RentalRequestService {
         if (request.getStatus() != RequestStatus.PENDING) {
             throw new IllegalArgumentException("Apenas pedidos pendentes podem ser deletados");
         }
+
+        Automobile automobile = request.getAutomobile();
+        automobile.setAvailable(true);
+        automobileRepository.save(automobile);
 
         rentalRequestRepository.delete(request);
     }

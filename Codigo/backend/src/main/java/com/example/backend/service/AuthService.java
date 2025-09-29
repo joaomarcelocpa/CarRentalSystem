@@ -50,34 +50,31 @@ public class AuthService {
     private JwtTokenProvider jwtTokenProvider;
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
-        // Buscar usuário por username ou email
         Object user = findUserByUsernameOrEmail(loginRequest.getUsername());
 
-        // Verificar senha
         String storedPassword = getPassword(user);
         if (!passwordEncoder.matches(loginRequest.getPassword(), storedPassword)) {
             throw new RuntimeException("Credenciais inválidas");
         }
 
-        // Criar autenticação manual
         String username = getUsername(user);
+        String userId = getUserId(user);
         UserRole role = getRole(user);
 
-        // Gerar token JWT manualmente
-        String jwt = jwtTokenProvider.generateTokenForUser(username, role);
+        String jwt = jwtTokenProvider.generateTokenForUser(username, userId, role);
 
         return new LoginResponseDTO(
-            jwt,
-            username,
-            getEmail(user),
-            role,
-            86400000L // 24 horas em millisegundos
+                jwt,
+                username,
+                getEmail(user),
+                role,
+                86400000L
         );
     }
 
     public UserResponseDTO register(UserCreateDTO userCreateDTO) {
         logger.info("Starting user registration for username: {}, email: {}, role: {}",
-                   userCreateDTO.getUsername(), userCreateDTO.getEmail(), userCreateDTO.getRole());
+                userCreateDTO.getUsername(), userCreateDTO.getEmail(), userCreateDTO.getRole());
 
         // Validar dados básicos
         if (userCreateDTO.getUsername() == null || userCreateDTO.getUsername().trim().isEmpty()) {
@@ -111,7 +108,7 @@ public class AuthService {
             logger.warn("Email already exists: {}", userCreateDTO.getEmail());
             throw new UserAlreadyExistsException("Email já está em uso");
         }
-        
+
         logger.info("Username and email validation passed");
 
         // Criar usuário
@@ -124,31 +121,31 @@ public class AuthService {
         setCreatedAt(user, LocalDate.now());
 
         logger.info("About to save user: {}", user.getClass().getSimpleName());
-        
+
         Object savedUser = saveUser(user);
         logger.info("User saved successfully: {}", savedUser.getClass().getSimpleName());
 
         String savedUserId = getUserId(savedUser);
         logger.info("Got user ID: {}", savedUserId);
-        
+
         String username = getUsername(savedUser);
         logger.info("Got username: {}", username);
-        
+
         String email = getEmail(savedUser);
         logger.info("Got email: {}", email);
-        
+
         UserRole role = getRole(savedUser);
         logger.info("Got role: {}", role);
-        
+
         LocalDate createdAt = getCreatedAt(savedUser);
         logger.info("Got createdAt: {}", createdAt);
 
-        logger.info("Creating UserResponseDTO - ID: {}, Username: {}, Email: {}, Role: {}, CreatedAt: {}", 
-                   savedUserId, username, email, role, createdAt);
+        logger.info("Creating UserResponseDTO - ID: {}, Username: {}, Email: {}, Role: {}, CreatedAt: {}",
+                savedUserId, username, email, role, createdAt);
 
         UserResponseDTO response = new UserResponseDTO(savedUserId, username, email, role, createdAt);
         logger.info("UserResponseDTO created successfully");
-        
+
         return response;
     }
 

@@ -37,10 +37,16 @@ public class JwtTokenProvider {
         return createToken(claims, username);
     }
 
-    public String generateTokenForUser(String username, UserRole role) {
+    public String generateTokenForUser(String username, String userId, UserRole role) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("role", role.name());
+        claims.put("userId", userId);  // ADICIONAR O ID
         return createToken(claims, username);
+    }
+
+    public String getUserIdFromToken(String token) {
+        Claims claims = getAllClaimsFromToken(token);
+        return claims.get("userId", String.class);
     }
 
     private String createToken(Map<String, Object> claims, String subject) {

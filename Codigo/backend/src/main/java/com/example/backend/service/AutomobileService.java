@@ -17,19 +17,25 @@ public class AutomobileService {
 
     public AutomobileService(AutomobileRepository repo) { this.repo = repo; }
 
-    public List<AutomobileResponseDTO> findAll() { 
+    public List<AutomobileResponseDTO> findAll() {
         return repo.findAll().stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
-    
-    public AutomobileResponseDTO findById(String id) { 
+
+    public AutomobileResponseDTO findById(String id) {
         return repo.findById(id)
                 .map(this::convertToResponseDTO)
                 .orElse(null);
     }
-    
-    public AutomobileResponseDTO create(AutomobileCreateDTO createDTO) {
+
+    public List<AutomobileResponseDTO> findByCreatedByAgentUsername(String username) {
+        return repo.findByCreatedByAgentUsername(username).stream()
+                .map(this::convertToResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    public AutomobileResponseDTO create(AutomobileCreateDTO createDTO, String agentId, String agentUsername) {
         Automobile automobile = new Automobile();
         automobile.setId(UUID.randomUUID().toString());
         automobile.setLicensePlate(createDTO.getLicensePlate());
@@ -40,10 +46,13 @@ public class AutomobileService {
         automobile.setDailyRate(createDTO.getDailyRate());
         automobile.setAvailable(true);
         automobile.setCreatedAt(LocalDate.now());
-        
+
+        automobile.setCreatedByAgentId(agentId);
+        automobile.setCreatedByAgentUsername(agentUsername);
+
         return convertToResponseDTO(repo.save(automobile));
     }
-    
+
     public AutomobileResponseDTO update(String id, AutomobileCreateDTO updateDTO) {
         return repo.findById(id).map(existing -> {
             existing.setLicensePlate(updateDTO.getLicensePlate());
@@ -55,8 +64,9 @@ public class AutomobileService {
             return convertToResponseDTO(repo.save(existing));
         }).orElse(null);
     }
+
     public void delete(String id) { repo.deleteById(id); }
-    
+
     private AutomobileResponseDTO convertToResponseDTO(Automobile automobile) {
         AutomobileResponseDTO dto = new AutomobileResponseDTO();
         dto.setId(automobile.getId());
@@ -68,6 +78,10 @@ public class AutomobileService {
         dto.setAvailable(automobile.isAvailable());
         dto.setDailyRate(automobile.getDailyRate());
         dto.setCreatedAt(automobile.getCreatedAt());
+
+        dto.setCreatedByAgentId(automobile.getCreatedByAgentId());
+        dto.setCreatedByAgentUsername(automobile.getCreatedByAgentUsername());
+
         return dto;
     }
 }

@@ -32,6 +32,13 @@ public class Automobile {
     @Column(name = "created_at")
     private LocalDate createdAt;
 
+    // NOVOS CAMPOS PARA RASTREAMENTO
+    @Column(name = "created_by_agent_id")
+    private String createdByAgentId;
+
+    @Column(name = "created_by_agent_username")
+    private String createdByAgentUsername;
+
     @OneToMany(mappedBy = "automobile", cascade = CascadeType.ALL)
     private List<RentalRequest> rentalRequests;
 
@@ -47,6 +54,7 @@ public class Automobile {
         return days * dailyRate;
     }
 
+    // Getters e Setters existentes
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getRegistration() { return registration; }
@@ -67,5 +75,10 @@ public class Automobile {
     public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
     public List<RentalRequest> getRentalRequests() { return rentalRequests; }
     public void setRentalRequests(List<RentalRequest> rentalRequests) { this.rentalRequests = rentalRequests; }
-}
 
+    // NOVOS GETTERS E SETTERS
+    public String getCreatedByAgentId() { return createdByAgentId; }
+    public void setCreatedByAgentId(String createdByAgentId) { this.createdByAgentId = createdByAgentId; }
+    public String getCreatedByAgentUsername() { return createdByAgentUsername; }
+    public void setCreatedByAgentUsername(String createdByAgentUsername) { this.createdByAgentUsername = createdByAgentUsername; }
+}

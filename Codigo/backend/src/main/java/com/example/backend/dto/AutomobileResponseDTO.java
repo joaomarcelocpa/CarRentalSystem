@@ -13,32 +13,35 @@ public class AutomobileResponseDTO {
     private Double dailyRate;
     private LocalDate createdAt;
 
+    // NOVOS CAMPOS
+    private String createdByAgentId;
+    private String createdByAgentUsername;
+
     public AutomobileResponseDTO() {}
 
+    // Getters e Setters existentes
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-
     public String getLicensePlate() { return licensePlate; }
     public void setLicensePlate(String licensePlate) { this.licensePlate = licensePlate; }
-
     public String getBrand() { return brand; }
     public void setBrand(String brand) { this.brand = brand; }
-
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }
-
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
-
     public String getRegistration() { return registration; }
     public void setRegistration(String registration) { this.registration = registration; }
-
     public boolean isAvailable() { return available; }
     public void setAvailable(boolean available) { this.available = available; }
-
     public Double getDailyRate() { return dailyRate; }
     public void setDailyRate(Double dailyRate) { this.dailyRate = dailyRate; }
-
     public LocalDate getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+
+    // NOVOS GETTERS E SETTERS
+    public String getCreatedByAgentId() { return createdByAgentId; }
+    public void setCreatedByAgentId(String createdByAgentId) { this.createdByAgentId = createdByAgentId; }
+    public String getCreatedByAgentUsername() { return createdByAgentUsername; }
+    public void setCreatedByAgentUsername(String createdByAgentUsername) { this.createdByAgentUsername = createdByAgentUsername; }
 }

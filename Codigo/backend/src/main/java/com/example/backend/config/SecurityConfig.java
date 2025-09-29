@@ -18,22 +18,21 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(cors -> {})
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Endpoints públicos - ordem específica
-                .requestMatchers("/api/auth/login").permitAll()
-                .requestMatchers("/api/auth/register").permitAll()
-                .requestMatchers("/api/test/public").permitAll()
-                .requestMatchers("/api/users/exists/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/actuator/**").permitAll()
-                // Endpoints de veículos - GET públicos, outros requerem autenticação
-                .requestMatchers("GET", "/api/automobiles").permitAll()
-                .requestMatchers("GET", "/api/automobiles/**").permitAll()
-                // Qualquer outra requisição requer autenticação
-                .anyRequest().authenticated()
-            );
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Endpoints públicos
+                        .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/auth/register").permitAll()
+                        .requestMatchers("/api/test/public").permitAll()
+                        .requestMatchers("/api/users/exists/**").permitAll()
+                        .requestMatchers("/actuator/**").permitAll()
+                        // Endpoints de veículos - GET públicos, outros requerem autenticação
+                        .requestMatchers("GET", "/api/automobiles").permitAll()
+                        .requestMatchers("GET", "/api/automobiles/**").permitAll()
+                        // Qualquer outra requisição requer autenticação
+                        .anyRequest().authenticated()
+                );
 
         return http.build();
     }
@@ -42,5 +41,4 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 }

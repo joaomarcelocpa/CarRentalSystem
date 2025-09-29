@@ -22,8 +22,7 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 
 # Instalar dependências necessárias
-RUN apk add --no-cache \
-    curl
+RUN apk add --no-cache curl
 
 # Criar usuário não-root para segurança
 RUN addgroup -g 1001 appuser && adduser -D -u 1001 -G appuser appuser
@@ -45,7 +44,6 @@ EXPOSE 8080
 
 # Configurar variáveis de ambiente
 ENV JAVA_OPTS="-Xmx512m -Xms256m"
-ENV SPRING_PROFILES_ACTIVE=docker
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=60s --retries=3 \

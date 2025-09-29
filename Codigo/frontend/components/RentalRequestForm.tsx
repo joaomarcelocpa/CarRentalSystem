@@ -5,20 +5,20 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
-import type { RentalRequest } from "@/shared/types/rental-request"
-import { Calendar, Car, DollarSign, X } from "lucide-react"
+import type { RentalRequestCreateDTO } from "@/shared/types/rental-request"
+import { Calendar, Car, DollarSign, X, AlertCircle } from "lucide-react"
 
 interface RentalRequestFormProps {
     onClose: () => void
-    onSuccess?: (request: RentalRequest) => void
+    onSuccess?: () => void
 }
 
 const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSuccess }) => {
     const { user } = useAuth()
     const [automobiles, setAutomobiles] = useState<Automobile[]>([])
     const [selectedAutomobile, setSelectedAutomobile] = useState<string>("")
-    const [startDate, setStartDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+    const [pickupDate, setPickupDate] = useState("")
+    const [returnDate, setReturnDate] = useState("")
     const [observations, setObservations] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
@@ -27,8 +27,8 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
     useEffect(() => {
         const fetchAutomobiles = async () => {
             try {
-                const availableCars = await ApiService.automobile.getAvailableAutomobiles()
-                setAutomobiles(availableCars)
+                const availableCars = await ApiService.automobile.getAllAutomobiles()
+                setAutomobiles(availableCars.filter(car => car.available))
             } catch (error) {
                 console.error("Error fetching automobiles:", error)
                 setError("Erro ao carregar veículos disponíveis")
@@ -39,11 +39,11 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
     }, [])
 
     useEffect(() => {
-        if (selectedAutomobile && startDate && endDate) {
+        if (selectedAutomobile && pickupDate && returnDate) {
             const car = automobiles.find(a => a.id === selectedAutomobile)
             if (car) {
-                const start = new Date(startDate)
-                const end = new Date(endDate)
+                const start = new Date(pickupDate)
+                const end = new Date(returnDate)
                 const diffTime = Math.abs(end.getTime() - start.getTime())
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
                 setEstimatedValue(diffDays * car.dailyRate)
@@ -51,7 +51,7 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
         } else {
             setEstimatedValue(0)
         }
-    }, [selectedAutomobile, startDate, endDate, automobiles])
+    }, [selectedAutomobile, pickupDate, returnDate, automobiles])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -61,21 +61,21 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
             return
         }
 
-        if (!selectedAutomobile || !startDate || !endDate) {
+        if (!selectedAutomobile || !pickupDate || !returnDate) {
             setError("Todos os campos obrigatórios devem ser preenchidos")
             return
         }
 
-        const start = new Date(startDate)
-        const end = new Date(endDate)
+        const start = new Date(pickupDate)
+        const end = new Date(returnDate)
 
         if (end <= start) {
-            setError("A data final deve ser posterior à data inicial")
+            setError("A data de devolução deve ser posterior à data de retirada")
             return
         }
 
         if (start < new Date()) {
-            setError("A data inicial não pode ser anterior a hoje")
+            setError("A data de retirada não pode ser anterior a hoje")
             return
         }
 
@@ -83,30 +83,23 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
         setError("")
 
         try {
-            const requestData: RentalRequest = {
-                desiredStartDate: startDate,
-                desiredEndDate: endDate,
-                observations,
-                customer: {
-                    id: user.id,
-                    name: user.name,
-                    emailContact: user.email
-                },
-                automobile: {
-                    id: selectedAutomobile
-                }
+            const requestData: RentalRequestCreateDTO = {
+                automobileId: selectedAutomobile,
+                pickupDate: pickupDate,
+                returnDate: returnDate,
+                observations: observations
             }
 
-            const createdRequest = await ApiService.rentalRequest.createRentalRequest(requestData)
+            await ApiService.rentalRequest.createRentalRequest(requestData)
 
             if (onSuccess) {
-                onSuccess(createdRequest)
+                onSuccess()
             }
 
             onClose()
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating rental request:", error)
-            setError("Erro ao criar solicitação de aluguel. Tente novamente.")
+            setError(error?.message || "Erro ao criar solicitação de aluguel. Tente novamente.")
         } finally {
             setIsLoading(false)
         }
@@ -118,6 +111,11 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
             currency: 'BRL'
         }).format(value)
     }
+
+    const minPickupDate = new Date().toISOString().split('T')[0]
+    const minReturnDate = pickupDate
+        ? new Date(new Date(pickupDate).getTime() + 86400000).toISOString().split('T')[0]
+        : minPickupDate
 
     return (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -143,8 +141,12 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
                     </div>
 
                     {error && (
-                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                            <p className="text-red-600 text-sm">{error}</p>
+                        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                            <AlertCircle className="w-5 h-5 text-red-500 mt-0.5 flex-shrink-0" />
+                            <div>
+                                <p className="text-red-800 text-sm font-medium">Erro</p>
+                                <p className="text-red-700 text-sm">{error}</p>
+                            </div>
                         </div>
                     )}
 
@@ -175,13 +177,13 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     <Calendar className="w-4 h-4 inline mr-2" />
-                                    Data de Início *
+                                    Data de Retirada *
                                 </label>
                                 <input
                                     type="date"
-                                    value={startDate}
-                                    onChange={(e) => setStartDate(e.target.value)}
-                                    min={new Date().toISOString().split('T')[0]}
+                                    value={pickupDate}
+                                    onChange={(e) => setPickupDate(e.target.value)}
+                                    min={minPickupDate}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
                                 />
@@ -189,13 +191,13 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     <Calendar className="w-4 h-4 inline mr-2" />
-                                    Data de Término *
+                                    Data de Devolução *
                                 </label>
                                 <input
                                     type="date"
-                                    value={endDate}
-                                    onChange={(e) => setEndDate(e.target.value)}
-                                    min={startDate || new Date().toISOString().split('T')[0]}
+                                    value={returnDate}
+                                    onChange={(e) => setReturnDate(e.target.value)}
+                                    min={minReturnDate}
                                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                     required
                                 />
@@ -211,9 +213,9 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
                                         Valor Estimado: {formatCurrency(estimatedValue)}
                                     </span>
                                 </div>
-                                {startDate && endDate && (
+                                {pickupDate && returnDate && (
                                     <p className="text-sm text-blue-600 mt-1">
-                                        {Math.ceil(Math.abs(new Date(endDate).getTime() - new Date(startDate).getTime()) / (1000 * 60 * 60 * 24))} dias
+                                        {Math.ceil(Math.abs(new Date(returnDate).getTime() - new Date(pickupDate).getTime()) / (1000 * 60 * 60 * 24))} dias
                                     </p>
                                 )}
                             </div>
@@ -244,7 +246,7 @@ const RentalRequestForm: React.FC<RentalRequestFormProps> = ({ onClose, onSucces
                             </button>
                             <button
                                 type="submit"
-                                disabled={isLoading || !selectedAutomobile || !startDate || !endDate}
+                                disabled={isLoading || !selectedAutomobile || !pickupDate || !returnDate}
                                 className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isLoading ? (

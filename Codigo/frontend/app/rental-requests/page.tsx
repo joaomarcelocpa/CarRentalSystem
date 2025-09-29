@@ -18,8 +18,7 @@ import {
     AlertTriangle,
     FileText,
     User,
-    DollarSign,
-    MapPin
+    DollarSign
 } from "lucide-react"
 import {
     getCustomerDisplayName,
@@ -57,15 +56,10 @@ const RentalRequestsPage: React.FC = () => {
 
             if (user?.userType === 'cliente') {
                 // Para clientes, buscar apenas suas solicitações
-                fetchedRequests = await ApiService.rentalRequest.getRentalRequestsByCustomer(user.id)
+                fetchedRequests = await ApiService.rentalRequest.getMyRequests()
             } else {
                 // Para agentes, buscar todas as solicitações
                 fetchedRequests = await ApiService.rentalRequest.getAllRentalRequests()
-            }
-
-            // Se não houver dados da API, usar dados mockados
-            if (fetchedRequests.length === 0) {
-                fetchedRequests = getMockRequests()
             }
 
             setRequests(fetchedRequests)
@@ -76,135 +70,10 @@ const RentalRequestsPage: React.FC = () => {
             }
         } catch (err) {
             console.error('Error fetching requests:', err)
-            setError('Erro ao carregar solicitações. Exibindo dados de exemplo.')
-
-            // Em caso de erro, usar dados mockados
-            const mockRequests = getMockRequests()
-            setRequests(mockRequests)
-            if (mockRequests.length > 0) {
-                setSelectedRequest(mockRequests[0])
-            }
+            setError('Erro ao carregar solicitações.')
         } finally {
             setLoading(false)
         }
-    }
-
-    const getMockRequests = (): RentalRequest[] => {
-        const baseRequests: RentalRequest[] = [
-            {
-                id: "req-001",
-                desiredStartDate: "2024-12-01",
-                desiredEndDate: "2024-12-05",
-                status: RequestStatus.APPROVED,
-                creationDate: "2024-11-20",
-                estimatedValue: 480,
-                observations: "Preciso do carro para viagem de negócios. Local de retirada: Aeroporto Internacional. Local de devolução: Agência Central.",
-                customer: {
-                    id: "cust-001",
-                    name: "João Silva",
-                    emailContact: "joao.silva@email.com"
-                },
-                automobile: {
-                    id: "auto-001",
-                    brand: "Toyota",
-                    model: "Corolla",
-                    year: 2023,
-                    dailyRate: 120
-                }
-            },
-            {
-                id: "req-002",
-                desiredStartDate: "2024-11-25",
-                desiredEndDate: "2024-11-27",
-                status: RequestStatus.UNDER_ANALYSIS,
-                creationDate: "2024-11-22",
-                estimatedValue: 260,
-                observations: "Viagem de fim de semana para a praia.",
-                customer: {
-                    id: "cust-002",
-                    name: "Maria Santos",
-                    emailContact: "maria.santos@email.com"
-                },
-                automobile: {
-                    id: "auto-002",
-                    brand: "Honda",
-                    model: "Civic",
-                    year: 2023,
-                    dailyRate: 130
-                }
-            },
-            {
-                id: "req-003",
-                desiredStartDate: "2024-12-10",
-                desiredEndDate: "2024-12-15",
-                status: RequestStatus.CREATED,
-                creationDate: "2024-11-23",
-                estimatedValue: 1400,
-                observations: "Necessito de um veículo premium para reuniões corporativas.",
-                customer: {
-                    id: "cust-003",
-                    name: "Carlos Oliveira",
-                    emailContact: "carlos.oliveira@empresa.com"
-                },
-                automobile: {
-                    id: "auto-003",
-                    brand: "BMW",
-                    model: "320i",
-                    year: 2023,
-                    dailyRate: 280
-                }
-            },
-            {
-                id: "req-004",
-                desiredStartDate: "2024-11-18",
-                desiredEndDate: "2024-11-20",
-                status: RequestStatus.EXECUTED,
-                creationDate: "2024-11-15",
-                estimatedValue: 170,
-                observations: "Aluguel concluído com sucesso.",
-                customer: {
-                    id: "cust-004",
-                    name: "Ana Costa",
-                    emailContact: "ana.costa@email.com"
-                },
-                automobile: {
-                    id: "auto-004",
-                    brand: "Ford",
-                    model: "Ka",
-                    year: 2022,
-                    dailyRate: 85
-                }
-            },
-            {
-                id: "req-005",
-                desiredStartDate: "2024-12-20",
-                desiredEndDate: "2024-12-22",
-                status: RequestStatus.REJECTED,
-                creationDate: "2024-11-21",
-                estimatedValue: 230,
-                observations: "Solicitação rejeitada por problemas na documentação.",
-                customer: {
-                    id: "cust-005",
-                    name: "Pedro Lima",
-                    emailContact: "pedro.lima@email.com"
-                },
-                automobile: {
-                    id: "auto-005",
-                    brand: "Volkswagen",
-                    model: "Jetta",
-                    year: 2022,
-                    dailyRate: 115
-                }
-            }
-        ]
-
-        // Se for cliente, retornar apenas as solicitações do usuário atual
-        if (user?.userType === 'cliente') {
-            return baseRequests.filter(req => req.customer?.name === user.name)
-        }
-
-        // Se for agente, retornar todas
-        return baseRequests
     }
 
     const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
@@ -213,16 +82,17 @@ const RentalRequestsPage: React.FC = () => {
         try {
             setUpdatingStatus(requestId)
 
-            // Simular chamada da API
-            await new Promise(resolve => setTimeout(resolve, 1500))
+            const response = await ApiService.rentalRequest.updateRequestStatus(requestId, {
+                status: newStatus
+            })
 
-            // Atualizar localmente (em produção seria a resposta da API)
+            // Atualizar localmente
             setRequests(prev => prev.map(req =>
-                req.id === requestId ? { ...req, status: newStatus } : req
+                req.id === requestId ? response : req
             ))
 
             if (selectedRequest?.id === requestId) {
-                setSelectedRequest(prev => prev ? { ...prev, status: newStatus } : null)
+                setSelectedRequest(response)
             }
 
             alert(`Status atualizado para: ${getStatusLabel(newStatus)}`)
@@ -240,7 +110,7 @@ const RentalRequestsPage: React.FC = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case RequestStatus.CREATED:
+            case RequestStatus.PENDING:
                 return 'bg-blue-100 text-blue-800'
             case RequestStatus.UNDER_ANALYSIS:
                 return 'bg-yellow-100 text-yellow-800'
@@ -250,8 +120,10 @@ const RentalRequestsPage: React.FC = () => {
                 return 'bg-red-100 text-red-800'
             case RequestStatus.CANCELLED:
                 return 'bg-gray-100 text-gray-800'
-            case RequestStatus.EXECUTED:
+            case RequestStatus.ACTIVE:
                 return 'bg-purple-100 text-purple-800'
+            case RequestStatus.COMPLETED:
+                return 'bg-indigo-100 text-indigo-800'
             default:
                 return 'bg-gray-100 text-gray-800'
         }
@@ -260,6 +132,8 @@ const RentalRequestsPage: React.FC = () => {
     const getStatusIcon = (status: string) => {
         switch (status) {
             case RequestStatus.APPROVED:
+            case RequestStatus.ACTIVE:
+            case RequestStatus.COMPLETED:
                 return <CheckCircle className="w-4 h-4" />
             case RequestStatus.REJECTED:
             case RequestStatus.CANCELLED:
@@ -273,12 +147,13 @@ const RentalRequestsPage: React.FC = () => {
 
     const getStatusLabel = (status: string) => {
         const labels = {
-            [RequestStatus.CREATED]: 'Criada',
+            [RequestStatus.PENDING]: 'Pendente',
             [RequestStatus.UNDER_ANALYSIS]: 'Em Análise',
-            [RequestStatus.APPROVED]: 'Aprovada',
-            [RequestStatus.REJECTED]: 'Rejeitada',
-            [RequestStatus.CANCELLED]: 'Cancelada',
-            [RequestStatus.EXECUTED]: 'Executada'
+            [RequestStatus.APPROVED]: 'Aprovado',
+            [RequestStatus.REJECTED]: 'Rejeitado',
+            [RequestStatus.CANCELLED]: 'Cancelado',
+            [RequestStatus.ACTIVE]: 'Ativo',
+            [RequestStatus.COMPLETED]: 'Concluído'
         }
         return labels[status as RequestStatus] || status
     }
@@ -412,18 +287,18 @@ const RentalRequestsPage: React.FC = () => {
                                                     <div className="flex items-center gap-2 text-sm text-white/70">
                                                         <Calendar className="w-3 h-3" />
                                                         <span>
-                                                            {formatDate(request.desiredStartDate)} - {formatDate(request.desiredEndDate)}
+                                                            {formatDate(request.pickupDate)} - {formatDate(request.returnDate)}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <div className="text-right">
-                                                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status || 'CREATED')}`}>
-                                                        {getStatusIcon(request.status || 'CREATED')}
-                                                        {getStatusLabel(request.status || 'CREATED')}
+                                                    <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status || 'PENDING')}`}>
+                                                        {getStatusIcon(request.status || 'PENDING')}
+                                                        {getStatusLabel(request.status || 'PENDING')}
                                                     </div>
-                                                    {request.estimatedValue && (
+                                                    {request.totalValue && (
                                                         <p className="text-sm text-white/70 mt-1">
-                                                            {formatCurrency(safeNumber(request.estimatedValue))}
+                                                            {formatCurrency(safeNumber(request.totalValue))}
                                                         </p>
                                                     )}
                                                 </div>
@@ -440,9 +315,9 @@ const RentalRequestsPage: React.FC = () => {
                                 <div className="space-y-6 overflow-y-auto">
                                     <div className="flex items-center justify-between">
                                         <h3 className="text-xl font-bold text-white drop-shadow-lg">Detalhes da Solicitação</h3>
-                                        <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status || 'CREATED')}`}>
-                                            {getStatusIcon(selectedRequest.status || 'CREATED')}
-                                            {getStatusLabel(selectedRequest.status || 'CREATED')}
+                                        <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status || 'PENDING')}`}>
+                                            {getStatusIcon(selectedRequest.status || 'PENDING')}
+                                            {getStatusLabel(selectedRequest.status || 'PENDING')}
                                         </div>
                                     </div>
 
@@ -451,7 +326,7 @@ const RentalRequestsPage: React.FC = () => {
                                         <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                                             <h4 className="text-white font-medium mb-3">Ações</h4>
                                             <div className="flex gap-2 flex-wrap">
-                                                {selectedRequest.status === RequestStatus.CREATED && (
+                                                {selectedRequest.status === RequestStatus.PENDING && (
                                                     <button
                                                         onClick={() => handleStatusChange(selectedRequest.id!, RequestStatus.UNDER_ANALYSIS)}
                                                         disabled={updatingStatus === selectedRequest.id}
@@ -520,16 +395,16 @@ const RentalRequestsPage: React.FC = () => {
                                             Período do Aluguel
                                         </h4>
                                         <div className="text-sm text-white/80 space-y-2">
-                                            <p><strong className="text-white">Início:</strong> {formatDate(selectedRequest.desiredStartDate)}</p>
-                                            <p><strong className="text-white">Término:</strong> {formatDate(selectedRequest.desiredEndDate)}</p>
+                                            <p><strong className="text-white">Início:</strong> {formatDate(selectedRequest.pickupDate)}</p>
+                                            <p><strong className="text-white">Término:</strong> {formatDate(selectedRequest.returnDate)}</p>
                                             <p><strong className="text-white">Duração:</strong> {
-                                                calculateDaysBetween(selectedRequest.desiredStartDate, selectedRequest.desiredEndDate)
+                                                calculateDaysBetween(selectedRequest.pickupDate, selectedRequest.returnDate)
                                             } dias</p>
-                                            {selectedRequest.estimatedValue && (
+                                            {selectedRequest.totalValue && (
                                                 <p className="flex items-center gap-1">
                                                     <DollarSign className="w-3 h-3" />
-                                                    <strong className="text-white">Valor Estimado:</strong>
-                                                    <span className="text-green-300 font-bold">{formatCurrency(safeNumber(selectedRequest.estimatedValue))}</span>
+                                                    <strong className="text-white">Valor Total:</strong>
+                                                    <span className="text-green-300 font-bold">{formatCurrency(safeNumber(selectedRequest.totalValue))}</span>
                                                 </p>
                                             )}
                                         </div>
@@ -539,8 +414,8 @@ const RentalRequestsPage: React.FC = () => {
                                     <div className="bg-white/5 backdrop-blur-sm rounded-lg p-4 border border-white/20">
                                         <h4 className="font-medium mb-3 text-white">Informações Adicionais</h4>
                                         <div className="text-sm text-white/80 space-y-2">
-                                            {selectedRequest.creationDate && (
-                                                <p><strong className="text-white">Data da Solicitação:</strong> {formatDate(selectedRequest.creationDate)}</p>
+                                            {selectedRequest.createdAt && (
+                                                <p><strong className="text-white">Data da Solicitação:</strong> {formatDate(selectedRequest.createdAt)}</p>
                                             )}
                                             {selectedRequest.observations && (
                                                 <div>

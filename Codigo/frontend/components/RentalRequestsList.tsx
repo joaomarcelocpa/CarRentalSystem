@@ -12,7 +12,9 @@ import {
     getCustomerDisplayName,
     getAutomobileDisplayName,
     calculateDaysBetween,
-    safeNumber
+    safeNumber,
+    formatCurrency,
+    formatDate
 } from "@/shared/utils/type-guards"
 
 interface RentalRequestsListProps {
@@ -39,7 +41,7 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
 
             if (userType === 'customer' && user) {
                 // For customers, get only their requests
-                fetchedRequests = await ApiService.rentalRequest.getRentalRequestsByCustomer(user.id)
+                fetchedRequests = await ApiService.rentalRequest.getMyRequests()
             } else {
                 // For agents, get all requests
                 fetchedRequests = await ApiService.rentalRequest.getAllRentalRequests()
@@ -59,7 +61,9 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
 
         try {
             setUpdatingStatus(requestId)
-            const updatedRequest = await ApiService.rentalRequest.updateRentalRequestStatus(requestId, newStatus)
+            const updatedRequest = await ApiService.rentalRequest.updateRequestStatus(requestId, {
+                status: newStatus
+            })
 
             if (updatedRequest) {
                 setRequests(prev => prev.map(req =>
@@ -80,7 +84,7 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case RequestStatus.CREATED:
+            case RequestStatus.PENDING:
                 return 'bg-blue-100 text-blue-800'
             case RequestStatus.UNDER_ANALYSIS:
                 return 'bg-yellow-100 text-yellow-800'
@@ -90,8 +94,10 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                 return 'bg-red-100 text-red-800'
             case RequestStatus.CANCELLED:
                 return 'bg-gray-100 text-gray-800'
-            case RequestStatus.EXECUTED:
+            case RequestStatus.ACTIVE:
                 return 'bg-purple-100 text-purple-800'
+            case RequestStatus.COMPLETED:
+                return 'bg-indigo-100 text-indigo-800'
             default:
                 return 'bg-gray-100 text-gray-800'
         }
@@ -100,6 +106,8 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
     const getStatusIcon = (status: string) => {
         switch (status) {
             case RequestStatus.APPROVED:
+            case RequestStatus.ACTIVE:
+            case RequestStatus.COMPLETED:
                 return <CheckCircle className="w-4 h-4" />
             case RequestStatus.REJECTED:
             case RequestStatus.CANCELLED:
@@ -110,25 +118,16 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                 return <Clock className="w-4 h-4" />
         }
     }
-    const formatCurrency = (value: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        }).format(value)
-    }
-
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('pt-BR')
-    }
 
     const getStatusLabel = (status: string) => {
         const labels = {
-            [RequestStatus.CREATED]: 'Criada',
+            [RequestStatus.PENDING]: 'Pendente',
             [RequestStatus.UNDER_ANALYSIS]: 'Em Análise',
-            [RequestStatus.APPROVED]: 'Aprovada',
-            [RequestStatus.REJECTED]: 'Rejeitada',
-            [RequestStatus.CANCELLED]: 'Cancelada',
-            [RequestStatus.EXECUTED]: 'Executada'
+            [RequestStatus.APPROVED]: 'Aprovado',
+            [RequestStatus.REJECTED]: 'Rejeitado',
+            [RequestStatus.CANCELLED]: 'Cancelado',
+            [RequestStatus.ACTIVE]: 'Ativo',
+            [RequestStatus.COMPLETED]: 'Concluído'
         }
         return labels[status as RequestStatus] || status
     }
@@ -211,18 +210,18 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                                                 <div className="flex items-center gap-2 text-sm text-gray-600">
                                                     <Calendar className="w-3 h-3" />
                                                     <span>
-                                                        {formatDate(request.desiredStartDate)} - {formatDate(request.desiredEndDate)}
+                                                        {formatDate(request.pickupDate)} - {formatDate(request.returnDate)}
                                                     </span>
                                                 </div>
                                             </div>
                                             <div className="text-right">
-                                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status || 'CREATED')}`}>
-                                                    {getStatusIcon(request.status || 'CREATED')}
-                                                    {getStatusLabel(request.status || 'CREATED')}
+                                                <div className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status || 'PENDING')}`}>
+                                                    {getStatusIcon(request.status || 'PENDING')}
+                                                    {getStatusLabel(request.status || 'PENDING')}
                                                 </div>
-                                                {request.estimatedValue && (
+                                                {request.totalValue && (
                                                     <p className="text-sm text-gray-600 mt-1">
-                                                        {formatCurrency(safeNumber(request.estimatedValue))}
+                                                        {formatCurrency(safeNumber(request.totalValue))}
                                                     </p>
                                                 )}
                                             </div>
@@ -243,14 +242,14 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                                     {/* Status and Actions */}
                                     <div className="bg-gray-50 rounded-lg p-4 mb-6">
                                         <div className="flex items-center justify-between">
-                                            <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status || 'CREATED')}`}>
-                                                {getStatusIcon(selectedRequest.status || 'CREATED')}
-                                                {getStatusLabel(selectedRequest.status || 'CREATED')}
+                                            <div className={`inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-medium ${getStatusColor(selectedRequest.status || 'PENDING')}`}>
+                                                {getStatusIcon(selectedRequest.status || 'PENDING')}
+                                                {getStatusLabel(selectedRequest.status || 'PENDING')}
                                             </div>
 
                                             {userType === 'agent' && user?.userType !== 'cliente' && (
                                                 <div className="flex gap-2">
-                                                    {selectedRequest.status === RequestStatus.CREATED && (
+                                                    {selectedRequest.status === RequestStatus.PENDING && (
                                                         <button
                                                             onClick={() => handleStatusChange(selectedRequest.id!, RequestStatus.UNDER_ANALYSIS)}
                                                             disabled={updatingStatus === selectedRequest.id}
@@ -292,7 +291,7 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                                             <div className="text-sm text-gray-600 space-y-1">
                                                 <p><strong>Modelo:</strong> {selectedRequest.automobile.brand} {selectedRequest.automobile.model}</p>
                                                 <p><strong>Ano:</strong> {selectedRequest.automobile.year}</p>
-                                                {selectedRequest.automobile && (
+                                                {selectedRequest.automobile.dailyRate && (
                                                     <p><strong>Valor Diário:</strong> {formatCurrency(safeNumber(selectedRequest.automobile.dailyRate))}</p>
                                                 )}
                                             </div>
@@ -317,13 +316,13 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                                             Período do Aluguel
                                         </h4>
                                         <div className="text-sm text-gray-600 space-y-1">
-                                            <p><strong>Início:</strong> {formatDate(selectedRequest.desiredStartDate)}</p>
-                                            <p><strong>Término:</strong> {formatDate(selectedRequest.desiredEndDate)}</p>
+                                            <p><strong>Início:</strong> {formatDate(selectedRequest.pickupDate)}</p>
+                                            <p><strong>Término:</strong> {formatDate(selectedRequest.returnDate)}</p>
                                             <p><strong>Duração:</strong> {
-                                                calculateDaysBetween(selectedRequest.desiredStartDate, selectedRequest.desiredEndDate)
+                                                calculateDaysBetween(selectedRequest.pickupDate, selectedRequest.returnDate)
                                             } dias</p>
-                                            {selectedRequest.estimatedValue && (
-                                                <p><strong>Valor Estimado:</strong> {formatCurrency(safeNumber(selectedRequest.estimatedValue))}</p>
+                                            {selectedRequest.totalValue && (
+                                                <p><strong>Valor Total:</strong> {formatCurrency(safeNumber(selectedRequest.totalValue))}</p>
                                             )}
                                         </div>
                                     </div>
@@ -332,8 +331,8 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
                                     <div className="border rounded-lg p-4">
                                         <h4 className="font-medium mb-2">Informações Adicionais</h4>
                                         <div className="text-sm text-gray-600 space-y-1">
-                                            {selectedRequest.creationDate && (
-                                                <p><strong>Data da Solicitação:</strong> {formatDate(selectedRequest.creationDate)}</p>
+                                            {selectedRequest.createdAt && (
+                                                <p><strong>Data da Solicitação:</strong> {formatDate(selectedRequest.createdAt)}</p>
                                             )}
                                             {selectedRequest.observations && (
                                                 <div>

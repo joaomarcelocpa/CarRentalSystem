@@ -5,7 +5,7 @@ import { useState, useEffect } from "react"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
-import type { RentalRequest } from "@/shared/types/rental-request"
+import type { RentalRequestCreateDTO } from "@/shared/types/rental-request"
 import {
     Calendar,
     X,
@@ -13,17 +13,17 @@ import {
     Fuel,
     Users,
     Cog,
-    MapPin,
     Shield,
     Phone,
-    Mail
+    Mail,
+    AlertCircle
 } from "lucide-react"
 import { formatCurrency, safeNumber } from "@/shared/utils/type-guards"
 
 interface RentalConfirmationModalProps {
     selectedCar: Automobile
     onClose: () => void
-    onSuccess?: (request: RentalRequest) => void
+    onSuccess?: () => void
 }
 
 const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
@@ -32,26 +32,27 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                                                              onSuccess
                                                                          }) => {
     const { user } = useAuth()
-    const [startDate] = useState("")
-    const [endDate, setEndDate] = useState("")
+    const [pickupDate, setPickupDate] = useState("")
+    const [returnDate, setReturnDate] = useState("")
     const [observations, setObservations] = useState("")
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState("")
     const [estimatedValue, setEstimatedValue] = useState<number>(0)
-    const [pickupLocation, setPickupLocation] = useState("Agência Central - Centro")
-    const [returnLocation, setReturnLocation] = useState("Agência Central - Centro")
+    const [rentalDays, setRentalDays] = useState<number>(0)
 
     useEffect(() => {
-        if (startDate && endDate) {
-            const start = new Date(startDate)
-            const end = new Date(endDate)
+        if (pickupDate && returnDate) {
+            const start = new Date(pickupDate)
+            const end = new Date(returnDate)
             const diffTime = Math.abs(end.getTime() - start.getTime())
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+            setRentalDays(diffDays)
             setEstimatedValue(diffDays * safeNumber(selectedCar.dailyRate))
         } else {
             setEstimatedValue(0)
+            setRentalDays(0)
         }
-    }, [startDate, endDate, selectedCar.dailyRate])
+    }, [pickupDate, returnDate, selectedCar.dailyRate])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -61,21 +62,21 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
             return
         }
 
-        if (!startDate || !endDate) {
+        if (!pickupDate || !returnDate) {
             setError("Todos os campos obrigatórios devem ser preenchidos")
             return
         }
 
-        const start = new Date(startDate)
-        const end = new Date(endDate)
+        const start = new Date(pickupDate)
+        const end = new Date(returnDate)
 
         if (end <= start) {
-            setError("A data final deve ser posterior à data inicial")
+            setError("A data de devolução deve ser posterior à data de retirada")
             return
         }
 
         if (start < new Date()) {
-            setError("A data inicial não pode ser anterior a hoje")
+            setError("A data de retirada não pode ser anterior a hoje")
             return
         }
 
@@ -83,30 +84,21 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
         setError("")
 
         try {
-            const requestData: RentalRequest = {
-                desiredStartDate: startDate,
-                desiredEndDate: endDate,
-                observations: observations +
-                    `\nLocal de retirada: ${pickupLocation}` +
-                    `\nLocal de devolução: ${returnLocation}`,
-                customer: {
-                    id: user.id,
-                    name: user.name,
-                    emailContact: user.email
-                },
-                automobile: {
-                    id: selectedCar.id!
-                }
+            const requestData: RentalRequestCreateDTO = {
+                automobileId: selectedCar.id!,
+                pickupDate: pickupDate,
+                returnDate: returnDate,
+                observations: observations
             }
 
-            const createdRequest = await ApiService.rentalRequest.createRentalRequest(requestData)
+            await ApiService.rentalRequest.createRentalRequest(requestData)
 
             if (onSuccess) {
-                onSuccess(createdRequest)
+                onSuccess()
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error creating rental request:", error)
-            setError("Erro ao criar solicitação de aluguel. Tente novamente.")
+            setError(error?.message || "Erro ao criar solicitação de aluguel. Tente novamente.")
         } finally {
             setIsLoading(false)
         }
@@ -125,30 +117,24 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
         return "Luxo"
     }
 
-    const getDaysCount = () => {
-        if (!startDate || !endDate) return 0
-        const start = new Date(startDate)
-        const end = new Date(endDate)
-        const diffTime = Math.abs(end.getTime() - start.getTime())
-        return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    }
+    // Data mínima para retirada (hoje)
+    const minPickupDate = new Date().toISOString().split('T')[0]
 
-    const locations = [
-        "Agência Central - Centro",
-        "Agência Aeroporto Internacional",
-        "Agência Shopping Center",
-        "Agência Rodoviária",
-        "Agência Zona Sul"
-    ]
+    // Data mínima para devolução (um dia após a retirada)
+    const minReturnDate = pickupDate
+        ? new Date(new Date(pickupDate).getTime() + 86400000).toISOString().split('T')[0]
+        : minPickupDate
 
     return (
         <div className="fixed inset-0 bg-black/80 bg-opacity-60 flex items-center justify-center p-2 z-30">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] overflow-y-auto">
                 {/* Header */}
                 <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-3">
                     <div className="flex justify-between items-center">
                         <div>
-                            <h2 className="text-xl font-bold ml-2">Confirmar Aluguel - {selectedCar.brand} {selectedCar.model} ({selectedCar.year})</h2>
+                            <h2 className="text-xl font-bold ml-2">
+                                Confirmar Aluguel - {selectedCar.brand} {selectedCar.model} ({selectedCar.year})
+                            </h2>
                         </div>
                         <button
                             onClick={onClose}
@@ -159,9 +145,9 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                     </div>
                 </div>
 
-                <div className="flex flex-col lg:flex-row h-full max-h-96 lg:max-h-screen overflow-hidden">
+                <div className="flex flex-col lg:flex-row">
                     {/* Car Info - Left Side */}
-                    <div className="lg:w-2-5 p-6 border-r bg-gray-50 overflow-y-auto" style={{width: '40%'}}>
+                    <div className="lg:w-2/5 p-6 border-r bg-gray-50">
                         {/* Car Image */}
                         <div className="relative h-40 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl overflow-hidden mb-4">
                             <img
@@ -170,7 +156,7 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                 className="w-full h-full object-cover"
                                 onError={(e) => {
                                     const target = e.target as HTMLImageElement;
-                                    target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhcnJvPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNTUlIiBmb250LWZhbWlseT0iQXJpYWwsIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5NDk0YWMiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5JbWFnZW0gSW5kaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
+                                    target.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjMwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+CiAgPHRleHQgeD0iNTAlIiB5PSI0NSUiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzk0YTNiOCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkNhcnJvPC90ZXh0Pgo8L3N2Zz4=";
                                 }}
                             />
                             <div className="absolute top-3 left-3 bg-blue-600 text-white px-2 py-1 rounded-full text-xs font-medium">
@@ -208,67 +194,45 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                     </div>
 
                     {/* Form - Right Side */}
-                    <div className="lg:w-3-5 p-6 overflow-y-auto" style={{width: '60%'}}>
+                    <div className="lg:w-3/5 p-6">
                         {error && (
-                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
+                                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                                 <p className="text-red-600 text-sm">{error}</p>
                             </div>
                         )}
 
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {/* Dates */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         <Calendar className="w-4 h-4 inline mr-1" />
-                                        Devolução *
+                                        Data de Retirada *
                                     </label>
                                     <input
                                         type="date"
-                                        value={endDate}
-                                        onChange={(e) => setEndDate(e.target.value)}
-                                        min={startDate || new Date().toISOString().split('T')[0]}
+                                        value={pickupDate}
+                                        onChange={(e) => setPickupDate(e.target.value)}
+                                        min={minPickupDate}
                                         className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                         required
                                     />
                                 </div>
-                            </div>
 
-                            {/* Locations */}
-                            <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <MapPin className="w-4 h-4 inline mr-1" />
-                                        Local de Retirada
+                                        <Calendar className="w-4 h-4 inline mr-1" />
+                                        Data de Devolução *
                                     </label>
-                                    <select
-                                        value={pickupLocation}
-                                        onChange={(e) => setPickupLocation(e.target.value)}
-                                        className="w-full px-3 py-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                    >
-                                        {locations.map((location) => (
-                                            <option key={location} value={location}>
-                                                {location}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        <MapPin className="w-4 h-4 inline mr-1" />
-                                        Local de Devolução
-                                    </label>
-                                    <select
-                                        value={returnLocation}
-                                        onChange={(e) => setReturnLocation(e.target.value)}
-                                        className="w-full px-3 py-2 border text-black border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                                    >
-                                        {locations.map((location) => (
-                                            <option key={location} value={location}>
-                                                {location}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <input
+                                        type="date"
+                                        value={returnDate}
+                                        onChange={(e) => setReturnDate(e.target.value)}
+                                        min={minReturnDate}
+                                        className="w-full px-3 py-2 text-black border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                        required
+                                    />
                                 </div>
                             </div>
 
@@ -283,7 +247,7 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                         </div>
                                         <div className="flex justify-between text-sm">
                                             <span className="text-blue-700">Quantidade de dias</span>
-                                            <span className="font-medium">{getDaysCount()} {getDaysCount() === 1 ? 'dia' : 'dias'}</span>
+                                            <span className="font-medium">{rentalDays} {rentalDays === 1 ? 'dia' : 'dias'}</span>
                                         </div>
                                         <div className="border-t border-blue-200 pt-2">
                                             <div className="flex justify-between items-center">
@@ -309,27 +273,6 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                 />
                             </div>
 
-                            {/* Contact Info */}
-                            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-                                <h4 className="text-sm font-semibold text-gray-800 mb-2">Informações de Contato</h4>
-                                <div className="grid grid-cols-2 gap-3 text-xs">
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <Mail className="w-4 h-4 text-blue-600" />
-                                        <div>
-                                            <p className="font-medium">Email</p>
-                                            <p>{user?.email}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 text-gray-700">
-                                        <Phone className="w-4 h-4 text-blue-600" />
-                                        <div>
-                                            <p className="font-medium">Suporte 24h</p>
-                                            <p>(11) 9999-9999</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                             {/* Action Buttons */}
                             <div className="flex gap-3 pt-4">
                                 <button
@@ -341,7 +284,7 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={isLoading || !startDate || !endDate}
+                                    disabled={isLoading || !pickupDate || !returnDate}
                                     className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm font-medium"
                                 >
                                     {isLoading ? (
@@ -364,4 +307,5 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
         </div>
     )
 }
+
 export default RentalConfirmationModal

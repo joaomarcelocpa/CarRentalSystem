@@ -1,54 +1,83 @@
 import { BaseApiService } from './base-api.service';
 import { API_CONFIG } from '@/shared/config/api';
-import type { RentalRequest, RequestStatus } from '@/shared/types/rental-request';
-import type { RentalRequestCreate } from '@/shared/types/flexible-types';
+import type {
+    RentalRequestCreateDTO,
+    RentalRequestResponseDTO,
+    RentalRequestUpdateDTO,
+    RentalRequestStatusUpdateDTO,
+    RequestStatus
+} from '@/shared/types/rental-request';
 
 export class RentalRequestService extends BaseApiService {
-    async getAllRentalRequests(): Promise<RentalRequest[]> {
-        return this.get<RentalRequest[]>(API_CONFIG.ENDPOINTS.RENTAL_REQUESTS);
+    // Endpoint para criar pedido (CLIENTE)
+    async createRentalRequest(request: RentalRequestCreateDTO): Promise<RentalRequestResponseDTO> {
+        return this.post<RentalRequestResponseDTO>('/rental-requests', request);
     }
 
-    async getRentalRequestById(id: string): Promise<RentalRequest | null> {
-        try {
-            return await this.get<RentalRequest>(`${API_CONFIG.ENDPOINTS.RENTAL_REQUESTS}/${id}`);
-        } catch (error) {
-            if (error instanceof Error && error.message.includes('404')) {
-                return null;
-            }
-            throw error;
-        }
+    // Endpoint para listar pedidos do cliente
+    async getMyRequests(): Promise<RentalRequestResponseDTO[]> {
+        return this.get<RentalRequestResponseDTO[]>('/rental-requests/my-requests');
     }
 
-    async createRentalRequest(request: RentalRequest | RentalRequestCreate): Promise<RentalRequest> {
-        // Transform the request to match backend expectations
-        const requestData = {
-            desiredStartDate: request.desiredStartDate,
-            desiredEndDate: request.desiredEndDate,
-            observations: request.observations,
-            customer: request.customer,
-            automobile: request.automobile
-        };
-
-        return this.post<RentalRequest>(API_CONFIG.ENDPOINTS.RENTAL_REQUESTS, requestData);
+    // Endpoint para buscar pedido específico
+    async getRentalRequestById(id: string): Promise<RentalRequestResponseDTO> {
+        return this.get<RentalRequestResponseDTO>(`/rental-requests/${id}`);
     }
 
-    async updateRentalRequestStatus(id: string, status: RequestStatus): Promise<RentalRequest | null> {
-        try {
-            return await this.patch<RentalRequest>(`${API_CONFIG.ENDPOINTS.RENTAL_REQUESTS}/${id}/status?status=${status}`, {});
-        } catch (error) {
-            if (error instanceof Error && error.message.includes('404')) {
-                return null;
-            }
-            throw error;
-        }
+    // Endpoint para atualizar pedido (CLIENTE)
+    async updateRentalRequest(id: string, update: RentalRequestUpdateDTO): Promise<RentalRequestResponseDTO> {
+        return this.put<RentalRequestResponseDTO>(`/rental-requests/${id}`, update);
     }
 
-    async deleteRentalRequest(id: string): Promise<void> {
-        await this.delete(`${API_CONFIG.ENDPOINTS.RENTAL_REQUESTS}/${id}`);
+    // Endpoint para cancelar pedido (CLIENTE)
+    async cancelRequest(id: string): Promise<RentalRequestResponseDTO> {
+        return this.patch<RentalRequestResponseDTO>(`/rental-requests/${id}/cancel`, {});
     }
 
-    async getRentalRequestsByCustomer(customerId: string): Promise<RentalRequest[]> {
-        const allRequests = await this.getAllRentalRequests();
-        return allRequests.filter(request => request.customer?.id === customerId);
+    // Endpoint para deletar pedido (CLIENTE)
+    async deleteRequest(id: string): Promise<void> {
+        return this.delete(`/rental-requests/${id}`);
+    }
+
+    // ========== ENDPOINTS PARA AGENTES ==========
+
+    // Listar todos os pedidos (AGENTE)
+    async getAllRentalRequests(): Promise<RentalRequestResponseDTO[]> {
+        return this.get<RentalRequestResponseDTO[]>('/rental-requests/all');
+    }
+
+    // Listar pedidos pendentes (AGENTE)
+    async getPendingRequests(): Promise<RentalRequestResponseDTO[]> {
+        return this.get<RentalRequestResponseDTO[]>('/rental-requests/pending');
+    }
+
+    // Listar pedidos dos veículos do agente (AGENTE_EMPRESA)
+    async getRequestsForMyAutomobiles(): Promise<RentalRequestResponseDTO[]> {
+        return this.get<RentalRequestResponseDTO[]>('/rental-requests/agent/my-automobiles');
+    }
+
+    // Atualizar status do pedido (AGENTE)
+    async updateRequestStatus(id: string, statusUpdate: RentalRequestStatusUpdateDTO): Promise<RentalRequestResponseDTO> {
+        return this.put<RentalRequestResponseDTO>(`/rental-requests/${id}/status`, statusUpdate);
+    }
+
+    // Buscar estatísticas (AGENTE)
+    async getStatistics(): Promise<{
+        total: number;
+        pending: number;
+        approved: number;
+        rejected: number;
+        active: number;
+        completed: number;
+        cancelled: number;
+    }> {
+        return this.get('/rental-requests/statistics');
+    }
+
+    // ========== MÉTODOS AUXILIARES ==========
+
+    async getRentalRequestsByCustomer(customerId: string): Promise<RentalRequestResponseDTO[]> {
+        // Usar o endpoint correto que filtra pelo cliente
+        return this.getMyRequests();
     }
 }

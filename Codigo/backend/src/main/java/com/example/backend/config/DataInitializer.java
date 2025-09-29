@@ -19,7 +19,7 @@ import java.util.UUID;
 
 // INICIALIZAÇÃO AUTOMÁTICA DESATIVADA
 // Para reativar, descomente a anotação @Component abaixo
-// @Component
+ @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final AutomobileRepository automobileRepository;

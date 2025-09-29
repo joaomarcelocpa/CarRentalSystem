@@ -17,7 +17,9 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Component
+// INICIALIZAÇÃO AUTOMÁTICA DESATIVADA
+// Para reativar, descomente a anotação @Component abaixo
+// @Component
 public class DataInitializer implements CommandLineRunner {
 
     private final AutomobileRepository automobileRepository;
@@ -43,9 +45,13 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        initializeAutomobiles();
-        initializeCustomers();
-        initializeUsers();
+        // INICIALIZAÇÃO DESATIVADA
+        // Descomente as linhas abaixo para reativar
+        // initializeAutomobiles();
+        // initializeCustomers();
+        // initializeUsers();
+
+        System.out.println("DataInitializer está DESATIVADO. Nenhum dado de exemplo foi criado.");
     }
 
     private void initializeAutomobiles() {
@@ -59,24 +65,24 @@ public class DataInitializer implements CommandLineRunner {
         createAutomobile("Volkswagen", "Jetta", 2022, "GHI-9012", "VW-2022", 140.0, true);
         createAutomobile("Hyundai", "Elantra", 2023, "JKL-3456", "HYN-2023", 145.0, true);
         createAutomobile("Ford", "Focus", 2022, "MNO-7890", "FOR-2022", 135.0, false);
-        
+
         // Carros médios
         createAutomobile("Toyota", "Camry", 2023, "PQR-1234", "CAM-2023", 200.0, true);
         createAutomobile("Honda", "Accord", 2023, "STU-5678", "ACC-2023", 210.0, true);
         createAutomobile("Nissan", "Altima", 2022, "VWX-9012", "ALT-2022", 190.0, true);
         createAutomobile("Chevrolet", "Malibu", 2023, "YZA-3456", "MAL-2023", 185.0, true);
-        
+
         // SUVs
         createAutomobile("Toyota", "RAV4", 2023, "BCD-7890", "RAV-2023", 250.0, true);
         createAutomobile("Honda", "CR-V", 2023, "EFG-1234", "CRV-2023", 260.0, true);
         createAutomobile("Ford", "Escape", 2022, "HIJ-5678", "ESC-2022", 240.0, true);
         createAutomobile("Nissan", "Rogue", 2023, "KLM-9012", "ROG-2023", 245.0, false);
-        
+
         // Carros de luxo
         createAutomobile("BMW", "320i", 2023, "NOP-3456", "BMW-2023", 350.0, true);
         createAutomobile("Mercedes-Benz", "C200", 2023, "QRS-7890", "MB-2023", 380.0, true);
         createAutomobile("Audi", "A4", 2023, "TUV-1234", "AUD-2023", 360.0, true);
-        
+
         // Carros compactos
         createAutomobile("Fiat", "Argo", 2023, "WXY-5678", "ARG-2023", 120.0, true);
         createAutomobile("Renault", "Logan", 2022, "ZAB-9012", "LOG-2022", 110.0, true);
@@ -85,8 +91,8 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Sample automobiles created successfully!");
     }
 
-    private void createAutomobile(String brand, String model, int year, String licensePlate, 
-                                String registration, double dailyRate, boolean available) {
+    private void createAutomobile(String brand, String model, int year, String licensePlate,
+                                  String registration, double dailyRate, boolean available) {
         Automobile automobile = new Automobile();
         automobile.setId(UUID.randomUUID().toString());
         automobile.setBrand(brand);
@@ -154,28 +160,28 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // CLIENTES DE TESTE
-        createCustomer("cliente.teste", "cliente@teste.com", "João Cliente", 
-                      "12.345.678-9", "123.456.789-01", "Rua das Flores, 123", "Engenheiro");
-        createCustomer("maria.cliente", "maria@teste.com", "Maria Cliente", 
-                      "98.765.432-1", "987.654.321-09", "Avenida Paulista, 456", "Advogada");
-        createCustomer("pedro.cliente", "pedro@teste.com", "Pedro Cliente", 
-                      "11.222.333-4", "111.222.333-44", "Rua do Comércio, 789", "Designer");
+        createCustomer("cliente.teste", "cliente@teste.com", "João Cliente",
+                "12.345.678-9", "123.456.789-01", "Rua das Flores, 123", "Engenheiro");
+        createCustomer("maria.cliente", "maria@teste.com", "Maria Cliente",
+                "98.765.432-1", "987.654.321-09", "Avenida Paulista, 456", "Advogada");
+        createCustomer("pedro.cliente", "pedro@teste.com", "Pedro Cliente",
+                "11.222.333-4", "111.222.333-44", "Rua do Comércio, 789", "Designer");
 
         // AGENTES DE EMPRESA
-        createCompanyAgent("agente.empresa", "agente@teste.com", 
-                          "Empresa de Aluguel de Carros LTDA", "12.345.678/0001-90");
-        createCompanyAgent("agente.empresa2", "agente2@teste.com", 
-                          "Locadora Premium LTDA", "23.456.789/0001-01");
-        createCompanyAgent("agente.empresa3", "agente3@teste.com", 
-                          "Auto Rental Express LTDA", "34.567.890/0001-12");
+        createCompanyAgent("agente.empresa", "agente@teste.com",
+                "Empresa de Aluguel de Carros LTDA", "12.345.678/0001-90");
+        createCompanyAgent("agente.empresa2", "agente2@teste.com",
+                "Locadora Premium LTDA", "23.456.789/0001-01");
+        createCompanyAgent("agente.empresa3", "agente3@teste.com",
+                "Auto Rental Express LTDA", "34.567.890/0001-12");
 
         // AGENTES DE BANCO
-        createBankAgent("agente.banco", "banco@teste.com", 
-                       "Banco de Crédito LTDA", "98.765.432/0001-10");
-        createBankAgent("agente.banco2", "banco2@teste.com", 
-                       "Banco Financeiro S/A", "87.654.321/0001-21");
-        createBankAgent("agente.banco3", "banco3@teste.com", 
-                       "Banco CrediCar S/A", "76.543.210/0001-32");
+        createBankAgent("agente.banco", "banco@teste.com",
+                "Banco de Crédito LTDA", "98.765.432/0001-10");
+        createBankAgent("agente.banco2", "banco2@teste.com",
+                "Banco Financeiro S/A", "87.654.321/0001-21");
+        createBankAgent("agente.banco3", "banco3@teste.com",
+                "Banco CrediCar S/A", "76.543.210/0001-32");
 
         // BANCOS DO SISTEMA
         createBank("banco.sistema", "banco.sistema@teste.com", "001", "Banco Central do Sistema");
@@ -185,8 +191,8 @@ public class DataInitializer implements CommandLineRunner {
         System.out.println("Sample users with roles created successfully!");
     }
 
-    private void createCustomer(String username, String email, String name, String rg, 
-                              String cpf, String address, String profession) {
+    private void createCustomer(String username, String email, String name, String rg,
+                                String cpf, String address, String profession) {
         Customer customer = new Customer();
         customer.setId(UUID.randomUUID().toString());
         customer.setUsername(username);

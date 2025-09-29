@@ -97,10 +97,10 @@ public class CustomerService {
     private RentalRequestSummaryDTO toRentalRequestSummaryDTO(com.example.backend.model.RentalRequest request) {
         RentalRequestSummaryDTO dto = new RentalRequestSummaryDTO();
         dto.setId(request.getId());
-        dto.setDesiredStartDate(request.getDesiredStartDate());
-        dto.setDesiredEndDate(request.getDesiredEndDate());
+        dto.setDesiredStartDate(request.getPickupDate());
+        dto.setDesiredEndDate(request.getReturnDate());
         dto.setStatus(request.getStatus() != null ? request.getStatus().toString() : null);
-        dto.setEstimatedValue(request.getEstimatedValue());
+        dto.setEstimatedValue(request.getTotalValue());
         return dto;
     }
 }

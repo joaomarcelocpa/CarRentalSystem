@@ -1,34 +1,19 @@
 package com.example.backend.dto;
 
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
-public class RentalRequestCreateDTO {
+public class RentalRequestUpdateDTO {
 
-    @NotBlank(message = "ID do automóvel é obrigatório")
-    private String automobileId;
-
-    @NotNull(message = "Data de retirada é obrigatória")
     @Future(message = "Data de retirada deve ser no futuro")
     private LocalDate pickupDate;
 
-    @NotNull(message = "Data de devolução é obrigatória")
     @Future(message = "Data de devolução deve ser no futuro")
     private LocalDate returnDate;
 
     private String observations;
 
-    public RentalRequestCreateDTO() {}
-
-    public String getAutomobileId() {
-        return automobileId;
-    }
-
-    public void setAutomobileId(String automobileId) {
-        this.automobileId = automobileId;
-    }
+    public RentalRequestUpdateDTO() {}
 
     public LocalDate getPickupDate() {
         return pickupDate;

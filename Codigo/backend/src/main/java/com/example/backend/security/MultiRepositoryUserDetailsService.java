@@ -120,6 +120,7 @@ public class MultiRepositoryUserDetailsService implements UserDetailsService {
                 authorities.add(new SimpleGrantedAuthority("PERM_RENTAL_REQUEST_UPDATE"));
                 authorities.add(new SimpleGrantedAuthority("PERM_CREDIT_CONTRACT_MANAGE"));
                 authorities.add(new SimpleGrantedAuthority("PERM_FINANCIAL_ANALYSIS"));
+                authorities.add(new SimpleGrantedAuthority("PERM_AUTOMOBILE_MANAGE")); // ADICIONADO
                 break;
         }
 

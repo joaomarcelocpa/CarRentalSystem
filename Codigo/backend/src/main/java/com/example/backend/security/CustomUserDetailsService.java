@@ -39,10 +39,10 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     private Collection<? extends GrantedAuthority> getAuthorities(UserRole role) {
         List<GrantedAuthority> authorities = new ArrayList<>();
-        
+
         // Adiciona a role como autoridade
         authorities.add(new SimpleGrantedAuthority("ROLE_" + role.name()));
-        
+
         // Adiciona permissões específicas baseadas na role
         switch (role) {
             case CUSTOMER:
@@ -65,9 +65,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 authorities.add(new SimpleGrantedAuthority("PERM_RENTAL_REQUEST_UPDATE"));
                 authorities.add(new SimpleGrantedAuthority("PERM_CREDIT_CONTRACT_MANAGE"));
                 authorities.add(new SimpleGrantedAuthority("PERM_FINANCIAL_ANALYSIS"));
+                authorities.add(new SimpleGrantedAuthority("PERM_AUTOMOBILE_MANAGE")); // ADICIONADO
                 break;
         }
-        
+
         return authorities;
     }
 }

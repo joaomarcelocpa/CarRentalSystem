@@ -25,93 +25,93 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserDetailsService {
-    
+
     @Autowired
     private CustomerRepository customerRepository;
-    
+
     @Autowired
     private CompanyAgentRepository companyAgentRepository;
-    
+
     @Autowired
     private BankAgentRepository bankAgentRepository;
-    
+
     @Autowired
     private BankRepository bankRepository;
-    
+
     public List<UserResponseDTO> findAll() {
         List<UserResponseDTO> customers = customerRepository.findAll().stream()
                 .map(this::convertCustomerToResponseDTO)
                 .collect(Collectors.toList());
-        
+
         List<UserResponseDTO> companyAgents = companyAgentRepository.findAll().stream()
                 .map(this::convertCompanyAgentToResponseDTO)
                 .collect(Collectors.toList());
-        
+
         List<UserResponseDTO> bankAgents = bankAgentRepository.findAll().stream()
                 .map(this::convertBankAgentToResponseDTO)
                 .collect(Collectors.toList());
-        
+
         List<UserResponseDTO> banks = bankRepository.findAll().stream()
                 .map(this::convertBankToResponseDTO)
                 .collect(Collectors.toList());
-        
+
         customers.addAll(companyAgents);
         customers.addAll(bankAgents);
         customers.addAll(banks);
-        
+
         return customers;
     }
-    
+
     public Optional<UserResponseDTO> findById(String id) {
         // Tentar encontrar em cada repositório
         Optional<Customer> customer = customerRepository.findById(id);
         if (customer.isPresent()) {
             return Optional.of(convertCustomerToResponseDTO(customer.get()));
         }
-        
+
         Optional<CompanyAgent> companyAgent = companyAgentRepository.findById(id);
         if (companyAgent.isPresent()) {
             return Optional.of(convertCompanyAgentToResponseDTO(companyAgent.get()));
         }
-        
+
         Optional<BankAgent> bankAgent = bankAgentRepository.findById(id);
         if (bankAgent.isPresent()) {
             return Optional.of(convertBankAgentToResponseDTO(bankAgent.get()));
         }
-        
+
         Optional<Bank> bank = bankRepository.findById(id);
         if (bank.isPresent()) {
             return Optional.of(convertBankToResponseDTO(bank.get()));
         }
-        
+
         return Optional.empty();
     }
-    
+
     public Optional<UserResponseDTO> findByEmail(String email) {
         // Tentar encontrar em cada repositório
         Optional<Customer> customer = customerRepository.findByEmail(email);
         if (customer.isPresent()) {
             return Optional.of(convertCustomerToResponseDTO(customer.get()));
         }
-        
+
         Optional<CompanyAgent> companyAgent = companyAgentRepository.findByEmail(email);
         if (companyAgent.isPresent()) {
             return Optional.of(convertCompanyAgentToResponseDTO(companyAgent.get()));
         }
-        
+
         Optional<BankAgent> bankAgent = bankAgentRepository.findByEmail(email);
         if (bankAgent.isPresent()) {
             return Optional.of(convertBankAgentToResponseDTO(bankAgent.get()));
         }
-        
+
         Optional<Bank> bank = bankRepository.findByEmail(email);
         if (bank.isPresent()) {
             return Optional.of(convertBankToResponseDTO(bank.get()));
         }
-        
+
         return Optional.empty();
     }
-    
+
     public List<UserResponseDTO> findByRole(UserRole role) {
         switch (role) {
             case CUSTOMER:
@@ -135,7 +135,7 @@ public class UserService implements UserDetailsService {
                 return List.of();
         }
     }
-    
+
     public UserResponseDTO create(UserCreateDTO dto) {
         switch (dto.getRole()) {
             case CUSTOMER:
@@ -147,7 +147,7 @@ public class UserService implements UserDetailsService {
                 customer.setCreatedAt(LocalDate.now());
                 Customer savedCustomer = customerRepository.save(customer);
                 return convertCustomerToResponseDTO(savedCustomer);
-                
+
             case AGENT_COMPANY:
                 CompanyAgent companyAgent = new CompanyAgent();
                 companyAgent.setId(UUID.randomUUID().toString());
@@ -157,7 +157,7 @@ public class UserService implements UserDetailsService {
                 companyAgent.setCreatedAt(LocalDate.now());
                 CompanyAgent savedCompanyAgent = companyAgentRepository.save(companyAgent);
                 return convertCompanyAgentToResponseDTO(savedCompanyAgent);
-                
+
             case AGENT_BANK:
                 BankAgent bankAgent = new BankAgent();
                 bankAgent.setId(UUID.randomUUID().toString());
@@ -167,12 +167,12 @@ public class UserService implements UserDetailsService {
                 bankAgent.setCreatedAt(LocalDate.now());
                 BankAgent savedBankAgent = bankAgentRepository.save(bankAgent);
                 return convertBankAgentToResponseDTO(savedBankAgent);
-                
+
             default:
                 throw new IllegalArgumentException("Role não suportado: " + dto.getRole());
         }
     }
-    
+
     public Optional<UserResponseDTO> update(String id, UserCreateDTO dto) {
         // Tentar encontrar em cada repositório
         Optional<Customer> customer = customerRepository.findById(id);
@@ -185,7 +185,7 @@ public class UserService implements UserDetailsService {
             Customer updated = customerRepository.save(c);
             return Optional.of(convertCustomerToResponseDTO(updated));
         }
-        
+
         Optional<CompanyAgent> companyAgent = companyAgentRepository.findById(id);
         if (companyAgent.isPresent()) {
             CompanyAgent agent = companyAgent.get();
@@ -196,7 +196,7 @@ public class UserService implements UserDetailsService {
             CompanyAgent updated = companyAgentRepository.save(agent);
             return Optional.of(convertCompanyAgentToResponseDTO(updated));
         }
-        
+
         Optional<BankAgent> bankAgent = bankAgentRepository.findById(id);
         if (bankAgent.isPresent()) {
             BankAgent agent = bankAgent.get();
@@ -207,7 +207,7 @@ public class UserService implements UserDetailsService {
             BankAgent updated = bankAgentRepository.save(agent);
             return Optional.of(convertBankAgentToResponseDTO(updated));
         }
-        
+
         Optional<Bank> bank = bankRepository.findById(id);
         if (bank.isPresent()) {
             Bank b = bank.get();
@@ -218,7 +218,7 @@ public class UserService implements UserDetailsService {
             Bank updated = bankRepository.save(b);
             return Optional.of(convertBankToResponseDTO(updated));
         }
-        
+
         return Optional.empty();
     }
 
@@ -241,21 +241,21 @@ public class UserService implements UserDetailsService {
         }
         return false;
     }
-    
+
     public boolean existsByEmail(String email) {
         return customerRepository.existsByEmail(email) ||
                companyAgentRepository.existsByEmail(email) ||
                bankAgentRepository.existsByEmail(email) ||
                bankRepository.existsByEmail(email);
     }
-    
+
     public boolean existsByUsername(String username) {
         return customerRepository.existsByUsername(username) ||
                companyAgentRepository.existsByUsername(username) ||
                bankAgentRepository.existsByUsername(username) ||
                bankRepository.existsByUsername(username);
     }
-    
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         // Tentar encontrar em cada repositório
@@ -263,25 +263,25 @@ public class UserService implements UserDetailsService {
         if (customer.isPresent()) {
             return createUserDetails(customer.get());
         }
-        
+
         Optional<CompanyAgent> companyAgent = companyAgentRepository.findByUsername(username);
         if (companyAgent.isPresent()) {
             return createUserDetails(companyAgent.get());
         }
-        
+
         Optional<BankAgent> bankAgent = bankAgentRepository.findByUsername(username);
         if (bankAgent.isPresent()) {
             return createUserDetails(bankAgent.get());
         }
-        
+
         Optional<Bank> bank = bankRepository.findByUsername(username);
         if (bank.isPresent()) {
             return createUserDetails(bank.get());
         }
-        
+
         throw new UsernameNotFoundException("Usuário não encontrado: " + username);
     }
-    
+
     private UserDetails createUserDetails(Object user) {
         if (user instanceof Customer customer) {
             return new org.springframework.security.core.userdetails.User(
@@ -314,14 +314,12 @@ public class UserService implements UserDetailsService {
         }
         throw new UsernameNotFoundException("Tipo de usuário não suportado");
     }
-    
+
     private java.util.Collection<? extends org.springframework.security.core.GrantedAuthority> getAuthorities(UserRole role) {
         java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
-        
-        // Adiciona a role como autoridade
+
         authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.name()));
-        
-        // Adiciona permissões específicas baseadas na role
+
         switch (role) {
             case CUSTOMER:
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("PERM_CUSTOMER_READ"));
@@ -343,12 +341,13 @@ public class UserService implements UserDetailsService {
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("PERM_RENTAL_REQUEST_UPDATE"));
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("PERM_CREDIT_CONTRACT_MANAGE"));
                 authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("PERM_FINANCIAL_ANALYSIS"));
+                authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("PERM_AUTOMOBILE_MANAGE")); // ADICIONADO
                 break;
         }
-        
+
         return authorities;
     }
-    
+
     private UserResponseDTO convertCustomerToResponseDTO(Customer customer) {
         return new UserResponseDTO(
                 customer.getId(),
@@ -358,7 +357,7 @@ public class UserService implements UserDetailsService {
                 customer.getCreatedAt()
         );
     }
-    
+
     private UserResponseDTO convertCompanyAgentToResponseDTO(CompanyAgent agent) {
         return new UserResponseDTO(
                 agent.getId(),
@@ -368,7 +367,7 @@ public class UserService implements UserDetailsService {
                 agent.getCreatedAt()
         );
     }
-    
+
     private UserResponseDTO convertBankAgentToResponseDTO(BankAgent agent) {
         return new UserResponseDTO(
                 agent.getId(),
@@ -378,7 +377,7 @@ public class UserService implements UserDetailsService {
                 agent.getCreatedAt()
         );
     }
-    
+
     private UserResponseDTO convertBankToResponseDTO(Bank bank) {
         return new UserResponseDTO(
                 bank.getId(),

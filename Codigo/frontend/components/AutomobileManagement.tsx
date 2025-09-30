@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client"
 
 import React, { useState, useEffect } from 'react'
@@ -28,7 +28,11 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
 
     const automobileService = new AutomobileService()
 
-     const loadAutomobiles = async () => {
+    useEffect(() => {
+        loadAutomobiles()
+    }, [])
+
+    const loadAutomobiles = async () => {
         try {
             setLoading(true)
             setError(null)
@@ -70,12 +74,6 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
             setLoading(false)
         }
     }
-
-   useEffect(() => {
-    loadAutomobiles()
-}, [loadAutomobiles])
-
-   
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()

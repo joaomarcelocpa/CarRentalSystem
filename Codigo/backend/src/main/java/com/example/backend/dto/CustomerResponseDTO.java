@@ -14,6 +14,7 @@ public class CustomerResponseDTO {
     private String address;
     private String profession;
     private LocalDate createdAt;
+    private Double creditLimit;
 
     private List<RentalRequestSummaryDTO> rentalRequests;
 
@@ -35,6 +36,8 @@ public class CustomerResponseDTO {
     public void setProfession(String profession) { this.profession = profession; }
     public LocalDate getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+    public Double getCreditLimit() { return creditLimit; }
+    public void setCreditLimit(Double creditLimit) { this.creditLimit = creditLimit; }
     public List<RentalRequestSummaryDTO> getRentalRequests() { return rentalRequests; }
     public void setRentalRequests(List<RentalRequestSummaryDTO> rentalRequests) { this.rentalRequests = rentalRequests; }
 }

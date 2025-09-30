@@ -4,9 +4,12 @@ import com.example.backend.dto.*;
 import com.example.backend.service.CustomerService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -40,5 +43,20 @@ public class CustomerController {
     public ResponseEntity<Void> delete(@PathVariable String id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/credit-limit")
+    @PreAuthorize("hasRole('AGENT_BANK')")
+    public ResponseEntity<?> updateCreditLimit(
+            @PathVariable String id,
+            @Valid @RequestBody CreditLimitUpdateDTO dto) {
+        try {
+            CustomerResponseDTO updated = service.updateCreditLimit(id, dto.getCreditLimit());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            Map<String, String> error = new HashMap<>();
+            error.put("error", e.getMessage());
+            return ResponseEntity.badRequest().body(error);
+        }
     }
 }

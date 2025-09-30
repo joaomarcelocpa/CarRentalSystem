@@ -20,6 +20,9 @@ public class Customer extends User {
     private String address;
     private String profession;
 
+    @Column(name = "credit_limit")
+    private Double creditLimit;
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
     private List<RentalRequest> rentalRequests;
 
@@ -32,6 +35,7 @@ public class Customer extends User {
     public Customer() {
         super();
         this.role = UserRole.CUSTOMER;
+        this.creditLimit = 0.0;
     }
 
 
@@ -40,6 +44,9 @@ public class Customer extends User {
 
     public String getEmailContact() { return emailContact; }
     public void setEmailContact(String emailContact) { this.emailContact = emailContact; }
+
+    public Double getCreditLimit() { return creditLimit; }
+    public void setCreditLimit(Double creditLimit) { this.creditLimit = creditLimit; }
 
     public String getRg() { return rg; }
     public void setRg(String rg) { this.rg = rg; }

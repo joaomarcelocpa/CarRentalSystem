@@ -63,12 +63,34 @@ public class RentalRequestService {
         request.setCreatedAt(LocalDate.now());
         request.calculateTotalValue();
 
-        automobile.setAvailable(false);
-        automobileRepository.save(automobile);
+        Double creditLimit = customer.getCreditLimit();
+        Double totalValue = request.getTotalValue();
 
+        if (creditLimit == null || creditLimit == 0.0) {
+            request.setStatus(RequestStatus.PENDING);
+        } else if (totalValue > creditLimit) {
+            request.setStatus(RequestStatus.REJECTED);
+            request.setRejectionReason("Valor do pedido (R$ " + String.format("%.2f", totalValue) +
+                    ") ultrapassa o limite de crédito aprovado (R$ " + String.format("%.2f", creditLimit) + ")");
+            request.setProcessedByAgentUsername("SISTEMA");
+            request.setProcessedByAgentId("AUTO");
+            request.setProcessedAt(LocalDate.now());
+
+            automobile.setAvailable(true);
+        } else {
+            request.setStatus(RequestStatus.PENDING);
+        }
+
+        if (request.getStatus() != RequestStatus.REJECTED) {
+            automobile.setAvailable(false);
+        }
+
+        automobileRepository.save(automobile);
         RentalRequest savedRequest = rentalRequestRepository.save(request);
+
         return convertToResponseDTO(savedRequest);
     }
+
 
     @Transactional(readOnly = true)
     public List<RentalRequestResponseDTO> findAllRequests() {

@@ -4,6 +4,7 @@ import com.example.backend.dto.*;
 import com.example.backend.model.Customer;
 import com.example.backend.repository.CustomerRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -60,6 +61,15 @@ public class CustomerService {
             Customer saved = repo.save(existing);
             return toResponseDTO(saved);
         }).orElse(null);
+    }
+
+    @Transactional
+    public CustomerResponseDTO updateCreditLimit(String customerId, Double creditLimit) {
+        return repo.findById(customerId).map(customer -> {
+            customer.setCreditLimit(creditLimit);
+            Customer saved = repo.save(customer);
+            return toResponseDTO(saved);
+        }).orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
     }
 
     private CustomerResponseDTO toResponseDTO(Customer customer) {

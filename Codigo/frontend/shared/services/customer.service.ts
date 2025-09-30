@@ -18,6 +18,10 @@ export class CustomerService extends BaseApiService {
         }
     }
 
+    async updateCreditLimit(id: string, creditLimit: number): Promise<CustomerResponseDTO> {
+    return this.patch<CustomerResponseDTO>(`${API_CONFIG.ENDPOINTS.CUSTOMERS}/${id}/credit-limit`, { creditLimit });
+}
+
     async createCustomer(customer: CustomerCreateDTO): Promise<CustomerResponseDTO> {
         return this.post<CustomerResponseDTO>(API_CONFIG.ENDPOINTS.CUSTOMERS, customer);
     }

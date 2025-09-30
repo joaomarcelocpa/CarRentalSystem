@@ -19,3 +19,6 @@ export class ApiService {
     public static income = new IncomeService();
     public static auth = new AuthService();
 }
+
+// Exportar também o serviço de validação
+export { RentalValidationService } from './rental-validation.service';

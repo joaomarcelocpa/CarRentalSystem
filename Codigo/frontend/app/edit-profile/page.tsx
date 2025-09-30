@@ -148,19 +148,6 @@ const EditProfilePage: React.FC = () => {
         router.push('/')
     }
 
-    const getUserTypeLabel = (userType: string) => {
-        switch (userType) {
-            case 'cliente':
-                return 'Cliente'
-            case 'agente-empresa':
-                return 'Agente Empresa'
-            case 'agente-banco':
-                return 'Agente Banco'
-            default:
-                return 'Usuário'
-        }
-    }
-
     // Se não há usuário, não renderizar nada (redirecionamento vai acontecer)
     if (!user) {
         return null

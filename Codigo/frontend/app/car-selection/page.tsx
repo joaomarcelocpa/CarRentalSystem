@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client"
 
 import type React from "react"
@@ -7,9 +8,8 @@ import { useAuth } from "@/shared/contexts/AuthContext"
 import { ApiService } from "@/shared/services"
 import type { Automobile } from "@/shared/types/automobile"
 import { formatCurrency, safeNumber } from "@/shared/utils/type-guards"
-import { Car, Star, Fuel, Users, Cog, Info, ArrowLeft } from "lucide-react"
+import { Car, Fuel, Users, Cog, Info, ArrowLeft } from "lucide-react"
 import RentalConfirmationModal from "@/components/RentalConfirmationModal"
-import type { RentalRequest } from "@/shared/types/rental-request"
 
 const CarSelectionPage: React.FC = () => {
     const router = useRouter()

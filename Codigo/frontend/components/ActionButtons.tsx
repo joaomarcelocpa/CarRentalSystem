@@ -5,7 +5,7 @@ import type React from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
 import type { UserType } from "@/shared/interfaces/user"
-import { Car, FileText, User, CheckCircle, Edit, CreditCard, Settings } from "lucide-react"
+import { Car, FileText, User, CheckCircle, Edit, CreditCard, Settings, DollarSign } from "lucide-react"
 
 const ActionButtons: React.FC = () => {
     const { user } = useAuth()
@@ -37,6 +37,10 @@ const ActionButtons: React.FC = () => {
 
     const handleManageAutomobiles = () => {
         router.push('/automobile-management')
+    }
+
+    const handleManageCreditLimits = () => {
+        router.push('/credit-limits')
     }
 
     const getButtonsForUserType = (userType: UserType) => {
@@ -109,6 +113,12 @@ const ActionButtons: React.FC = () => {
                         label: "Gerenciar Veículos",
                         icon: Settings,
                         action: handleManageAutomobiles
+                    },
+                    {
+                        id: "manage-credit-limits",
+                        label: "Gerenciar Limites de Crédito",
+                        icon: DollarSign,
+                        action: handleManageCreditLimits
                     },
                     {
                         id: "credit-contract",

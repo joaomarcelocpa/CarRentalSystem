@@ -43,7 +43,7 @@ const RegisterPage: React.FC = () => {
             } else {
                 setError("Erro ao criar conta. Tente novamente.")
             }
-        } catch (err) {
+        } catch {
             setError("Erro ao criar conta. Tente novamente.")
         } finally {
             setIsLoading(false)

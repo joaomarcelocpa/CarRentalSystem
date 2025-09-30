@@ -27,7 +27,7 @@ const LoginPage: React.FC = () => {
             } else {
                 setError("Credenciais inválidas. Tente novamente.")
             }
-        } catch (err) {
+        } catch {
             setError("Erro ao fazer login. Tente novamente.")
         } finally {
             setIsLoading(false)

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 // app/components/RentalRequestsList.tsx
 "use client"
 
@@ -30,11 +31,7 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
     const [selectedRequest, setSelectedRequest] = useState<RentalRequest | null>(null)
     const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
-    useEffect(() => {
-        fetchRequests()
-    }, [])
-
-    const fetchRequests = async () => {
+     const fetchRequests = async () => {
         try {
             setLoading(true)
             let fetchedRequests: RentalRequest[]
@@ -56,6 +53,12 @@ const RentalRequestsList: React.FC<RentalRequestsListProps> = ({ onClose, userTy
         }
     }
 
+
+    useEffect(() => {
+    fetchRequests()
+}, [fetchRequests])
+
+   
     const handleStatusChange = async (requestId: string, newStatus: RequestStatus) => {
         if (!user || user.userType === 'cliente') return
 

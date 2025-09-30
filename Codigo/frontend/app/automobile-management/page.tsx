@@ -1,6 +1,6 @@
 "use client"
 
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Header from '@/components/Header'
 import AutomobileManagement from '@/components/AutomobileManagement'
@@ -14,9 +14,33 @@ const AutomobileManagementPage: React.FC = () => {
     // Verificar se o usuário é um agente
     const isAgent = user?.userType === 'agente-empresa' || user?.userType === 'agente-banco'
 
+    // Usar useEffect para fazer o redirect, não durante a renderização
+    useEffect(() => {
+        if (!user) {
+            router.push('/login')
+        }
+    }, [user, router])
+
+    // Mostrar loading enquanto verifica autenticação
     if (!user) {
-        router.push('/login')
-        return null
+        return (
+            <div className="min-h-screen relative">
+                <video
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    className="fixed inset-0 w-full h-full object-cover z-0"
+                >
+                    <source src="/wallpaper.mp4" type="video/mp4" />
+                </video>
+                <div className="fixed inset-0 bg-black/40 z-10"></div>
+
+                <div className="relative z-20 min-h-screen flex items-center justify-center">
+                    <div className="text-white text-xl">Verificando autenticação...</div>
+                </div>
+            </div>
+        )
     }
 
     if (!isAgent) {
@@ -32,7 +56,7 @@ const AutomobileManagementPage: React.FC = () => {
                     <source src="/wallpaper.mp4" type="video/mp4" />
                 </video>
                 <div className="fixed inset-0 bg-black/40 z-10"></div>
-                
+
                 <div className="relative z-20">
                     <Header />
                     <main className="container mx-auto px-4 py-8">
@@ -73,7 +97,7 @@ const AutomobileManagementPage: React.FC = () => {
             {/* Conteúdo da página */}
             <div className="relative z-20">
                 <Header />
-                
+
                 <main className="container mx-auto px-4 py-8">
                     <div className="max-w-6xl mx-auto">
                         {/* Botão de voltar */}

@@ -28,17 +28,46 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
 
     useEffect(() => {
         loadAutomobiles()
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [])
 
     const loadAutomobiles = async () => {
         try {
             setLoading(true)
             setError(null)
-            const data = await automobileService.getAllAutomobiles()
-            setAutomobiles(data)
+
+            // CORRIGIDO: Buscar apenas os veículos do agente logado
+            // O endpoint /automobiles retorna todos os veículos
+            // Precisamos filtrar apenas os do agente atual
+            const allAutomobiles = await automobileService.getAllAutomobiles()
+
+            // O backend deve ter adicionado os campos createdByAgentUsername
+            // Vamos buscar o username do token
+            const token = localStorage.getItem('auth_token')
+            if (!token) {
+                setError('Token de autenticação não encontrado')
+                setAutomobiles([])
+                return
+            }
+
+            // Decodificar o token para pegar o username
+            const base64Url = token.split('.')[1]
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+            }).join(''))
+
+            const payload = JSON.parse(jsonPayload)
+            const currentUsername = payload.sub // O username está no campo 'sub' do JWT
+
+            // Filtrar apenas os veículos criados pelo agente atual
+            const myAutomobiles = allAutomobiles.filter(auto =>
+                (auto as any).createdByAgentUsername === currentUsername
+            )
+
+            setAutomobiles(myAutomobiles)
         } catch (err) {
-            setError('Erro ao carregar veículos. Verifique se você tem permissão de agente.')
             console.error('Error loading automobiles:', err)
+            setError('Erro ao carregar veículos. Verifique se você tem permissão de agente.')
         } finally {
             setLoading(false)
         }
@@ -48,13 +77,13 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
         e.preventDefault()
         try {
             setError(null)
-            
+
             if (editingAutomobile) {
                 await automobileService.updateAutomobile(editingAutomobile.id, formData)
             } else {
                 await automobileService.createAutomobile(formData)
             }
-            
+
             await loadAutomobiles()
             resetForm()
         } catch (err) {
@@ -128,7 +157,7 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-2">
                     <Car className="w-6 h-6" />
-                    Gerenciamento de Veículos
+                    Meus Veículos
                 </h2>
                 <button
                     onClick={() => setShowForm(true)}
@@ -151,7 +180,7 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
                     <h3 className="text-xl font-semibold text-white mb-4">
                         {editingAutomobile ? 'Editar Veículo' : 'Novo Veículo'}
                     </h3>
-                    
+
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
@@ -263,7 +292,7 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
             <div className="space-y-4">
                 {automobiles.length === 0 ? (
                     <div className="text-center py-8 text-white/60">
-                        Nenhum veículo cadastrado ainda.
+                        Você ainda não cadastrou nenhum veículo.
                     </div>
                 ) : (
                     automobiles.map((automobile) => (
@@ -279,14 +308,14 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
                                             {automobile.brand} {automobile.model}
                                         </h3>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                            automobile.available 
-                                                ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                                            automobile.available
+                                                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                                 : 'bg-red-500/20 text-red-400 border border-red-500/30'
                                         }`}>
                                             {automobile.available ? 'Disponível' : 'Indisponível'}
                                         </span>
                                     </div>
-                                    
+
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-white/80">
                                         <div>
                                             <span className="font-medium">Placa:</span> {automobile.licensePlate}
@@ -301,14 +330,14 @@ const AutomobileManagement: React.FC<AutomobileManagementProps> = ({ className =
                                             <span className="font-medium">Criado em:</span> {formatDate(automobile.createdAt)}
                                         </div>
                                     </div>
-                                    
+
                                     {automobile.registration && (
                                         <div className="mt-2 text-sm text-white/70">
                                             <span className="font-medium">Registro:</span> {automobile.registration}
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 <div className="flex gap-2 ml-4">
                                     <button
                                         onClick={() => handleEdit(automobile)}

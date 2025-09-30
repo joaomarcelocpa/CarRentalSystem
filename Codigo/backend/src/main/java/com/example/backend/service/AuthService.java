@@ -33,13 +33,13 @@ public class AuthService {
 
     @Autowired
     private CustomerRepository customerRepository;
-    
+
     @Autowired
     private CompanyAgentRepository companyAgentRepository;
-    
+
     @Autowired
     private BankAgentRepository bankAgentRepository;
-    
+
     @Autowired
     private BankRepository bankRepository;
 
@@ -50,10 +50,13 @@ public class AuthService {
     private JwtTokenProvider jwtTokenProvider;
 
     public LoginResponseDTO login(LoginRequestDTO loginRequest) {
+        logger.info("Login attempt for username: {}", loginRequest.getUsername());
+
         Object user = findUserByUsernameOrEmail(loginRequest.getUsername());
 
         String storedPassword = getPassword(user);
         if (!passwordEncoder.matches(loginRequest.getPassword(), storedPassword)) {
+            logger.warn("Invalid password for user: {}", loginRequest.getUsername());
             throw new RuntimeException("Credenciais inválidas");
         }
 
@@ -61,6 +64,9 @@ public class AuthService {
         String userId = getUserId(user);
         UserRole role = getRole(user);
 
+        logger.info("Login successful - Username: {}, UserId: {}, Role: {}", username, userId, role);
+
+        // CORREÇÃO: Garantir que o userId seja salvo no token
         String jwt = jwtTokenProvider.generateTokenForUser(username, userId, role);
 
         return new LoginResponseDTO(
@@ -120,101 +126,113 @@ public class AuthService {
         setPassword(user, passwordEncoder.encode(userCreateDTO.getPassword()));
         setCreatedAt(user, LocalDate.now());
 
-        logger.info("About to save user: {}", user.getClass().getSimpleName());
+        logger.info("About to save user - ID: {}, Username: {}, Role: {}",
+                userId, userCreateDTO.getUsername(), userCreateDTO.getRole());
 
         Object savedUser = saveUser(user);
         logger.info("User saved successfully: {}", savedUser.getClass().getSimpleName());
 
         String savedUserId = getUserId(savedUser);
-        logger.info("Got user ID: {}", savedUserId);
-
         String username = getUsername(savedUser);
-        logger.info("Got username: {}", username);
-
         String email = getEmail(savedUser);
-        logger.info("Got email: {}", email);
-
         UserRole role = getRole(savedUser);
-        logger.info("Got role: {}", role);
-
         LocalDate createdAt = getCreatedAt(savedUser);
-        logger.info("Got createdAt: {}", createdAt);
 
-        logger.info("Creating UserResponseDTO - ID: {}, Username: {}, Email: {}, Role: {}, CreatedAt: {}",
-                savedUserId, username, email, role, createdAt);
+        logger.info("User created - ID: {}, Username: {}, Email: {}, Role: {}",
+                savedUserId, username, email, role);
 
-        UserResponseDTO response = new UserResponseDTO(savedUserId, username, email, role, createdAt);
-        logger.info("UserResponseDTO created successfully");
-
-        return response;
+        return new UserResponseDTO(savedUserId, username, email, role, createdAt);
     }
 
     public UserResponseDTO getCurrentUser(String username) {
         Object user = findUserByUsername(username);
 
         return new UserResponseDTO(
-            getUserId(user),
-            getUsername(user),
-            getEmail(user),
-            getRole(user),
-            getCreatedAt(user)
+                getUserId(user),
+                getUsername(user),
+                getEmail(user),
+                getRole(user),
+                getCreatedAt(user)
         );
     }
 
     private Object findUserByUsername(String username) {
+        logger.debug("Searching for user by username: {}", username);
+
         // Tentar encontrar em cada repositório
         var customer = customerRepository.findByUsername(username);
-        if (customer.isPresent()) return customer.get();
+        if (customer.isPresent()) {
+            logger.debug("Found Customer with ID: {}", customer.get().getId());
+            return customer.get();
+        }
 
         var companyAgent = companyAgentRepository.findByUsername(username);
-        if (companyAgent.isPresent()) return companyAgent.get();
+        if (companyAgent.isPresent()) {
+            logger.debug("Found CompanyAgent with ID: {}", companyAgent.get().getId());
+            return companyAgent.get();
+        }
 
         var bankAgent = bankAgentRepository.findByUsername(username);
-        if (bankAgent.isPresent()) return bankAgent.get();
+        if (bankAgent.isPresent()) {
+            logger.debug("Found BankAgent with ID: {}", bankAgent.get().getId());
+            return bankAgent.get();
+        }
 
         var bank = bankRepository.findByUsername(username);
-        if (bank.isPresent()) return bank.get();
+        if (bank.isPresent()) {
+            logger.debug("Found Bank with ID: {}", bank.get().getId());
+            return bank.get();
+        }
 
+        logger.error("User not found: {}", username);
         throw new UserNotFoundException("Usuário não encontrado");
     }
 
     private Object findUserByUsernameOrEmail(String identifier) {
         logger.info("Searching for user with identifier: {}", identifier);
-        // Primeiro, tentar buscar por username
+
         try {
-            logger.info("Trying to find user by username: {}", identifier);
             Object user = findUserByUsername(identifier);
-            logger.info("Found user by username: {}", user.getClass().getSimpleName());
+            logger.info("Found user by username: {}, ID: {}",
+                    getUsername(user), getUserId(user));
             return user;
         } catch (UserNotFoundException e) {
             logger.info("User not found by username, trying by email: {}", identifier);
-            // Se não encontrou por username, tentar por email
             Object user = findUserByEmail(identifier);
-            logger.info("Found user by email: {}", user.getClass().getSimpleName());
+            logger.info("Found user by email: {}, ID: {}",
+                    getUsername(user), getUserId(user));
             return user;
         }
     }
 
     private Object findUserByEmail(String email) {
-        logger.info("Searching for user by email: {}", email);
-        // Tentar encontrar por email em cada repositório
+        logger.debug("Searching for user by email: {}", email);
+
         var customer = customerRepository.findByEmail(email);
-        logger.info("Customer search result: {}", customer.isPresent() ? "found" : "not found");
-        if (customer.isPresent()) return customer.get();
+        if (customer.isPresent()) {
+            logger.debug("Found Customer by email, ID: {}", customer.get().getId());
+            return customer.get();
+        }
 
         var companyAgent = companyAgentRepository.findByEmail(email);
-        logger.info("CompanyAgent search result: {}", companyAgent.isPresent() ? "found" : "not found");
-        if (companyAgent.isPresent()) return companyAgent.get();
+        if (companyAgent.isPresent()) {
+            logger.debug("Found CompanyAgent by email, ID: {}", companyAgent.get().getId());
+            return companyAgent.get();
+        }
 
         var bankAgent = bankAgentRepository.findByEmail(email);
-        logger.info("BankAgent search result: {}", bankAgent.isPresent() ? "found" : "not found");
-        if (bankAgent.isPresent()) return bankAgent.get();
+        if (bankAgent.isPresent()) {
+            logger.debug("Found BankAgent by email, ID: {}", bankAgent.get().getId());
+            return bankAgent.get();
+        }
 
         var bank = bankRepository.findByEmail(email);
-        logger.info("Bank search result: {}", bank.isPresent() ? "found" : "not found");
-        if (bank.isPresent()) return bank.get();
+        if (bank.isPresent()) {
+            logger.debug("Found Bank by email, ID: {}", bank.get().getId());
+            return bank.get();
+        }
 
-        logger.warn("No user found with email: {}", email);
+        logger.error("No user found with email: {}", email);
         throw new UserNotFoundException("Usuário não encontrado com email: " + email);
     }
 
@@ -240,23 +258,32 @@ public class AuthService {
 
     private Object saveUser(Object user) {
         logger.info("saveUser called with type: {}", user.getClass().getSimpleName());
-        
+
         try {
             if (user instanceof Customer customer) {
-                logger.info("Saving Customer with ID: {}, Username: {}, Email: {}, Role: {}", 
-                           customer.getId(), customer.getUsername(), customer.getEmail(), customer.getRole());
+                logger.info("Saving Customer with ID: {}, Username: {}",
+                        customer.getId(), customer.getUsername());
                 Customer saved = customerRepository.save(customer);
                 logger.info("Customer saved successfully with ID: {}", saved.getId());
                 return saved;
             } else if (user instanceof CompanyAgent agent) {
-                logger.info("Saving CompanyAgent");
-                return companyAgentRepository.save(agent);
+                logger.info("Saving CompanyAgent with ID: {}, Username: {}",
+                        agent.getId(), agent.getUsername());
+                CompanyAgent saved = companyAgentRepository.save(agent);
+                logger.info("CompanyAgent saved successfully with ID: {}", saved.getId());
+                return saved;
             } else if (user instanceof BankAgent agent) {
-                logger.info("Saving BankAgent");
-                return bankAgentRepository.save(agent);
+                logger.info("Saving BankAgent with ID: {}, Username: {}",
+                        agent.getId(), agent.getUsername());
+                BankAgent saved = bankAgentRepository.save(agent);
+                logger.info("BankAgent saved successfully with ID: {}", saved.getId());
+                return saved;
             } else if (user instanceof Bank bank) {
-                logger.info("Saving Bank");
-                return bankRepository.save(bank);
+                logger.info("Saving Bank with ID: {}, Username: {}",
+                        bank.getId(), bank.getUsername());
+                Bank saved = bankRepository.save(bank);
+                logger.info("Bank saved successfully with ID: {}", saved.getId());
+                return saved;
             }
             logger.error("Unsupported user type: {}", user.getClass().getName());
             throw new InvalidUserDataException("Tipo de usuário não suportado");
@@ -268,36 +295,24 @@ public class AuthService {
 
     private boolean existsByUsername(String username) {
         return customerRepository.existsByUsername(username) ||
-               companyAgentRepository.existsByUsername(username) ||
-               bankAgentRepository.existsByUsername(username) ||
-               bankRepository.existsByUsername(username);
+                companyAgentRepository.existsByUsername(username) ||
+                bankAgentRepository.existsByUsername(username) ||
+                bankRepository.existsByUsername(username);
     }
 
     private boolean existsByEmail(String email) {
         return customerRepository.existsByEmail(email) ||
-               companyAgentRepository.existsByEmail(email) ||
-               bankAgentRepository.existsByEmail(email) ||
-               bankRepository.existsByEmail(email);
+                companyAgentRepository.existsByEmail(email) ||
+                bankAgentRepository.existsByEmail(email) ||
+                bankRepository.existsByEmail(email);
     }
 
     // Métodos auxiliares para acessar propriedades
     private String getUsername(Object user) {
-        if (user instanceof Customer customer) {
-            logger.debug("Getting username from Customer: {}", customer.getUsername());
-            return customer.getUsername();
-        }
-        if (user instanceof CompanyAgent agent) {
-            logger.debug("Getting username from CompanyAgent: {}", agent.getUsername());
-            return agent.getUsername();
-        }
-        if (user instanceof BankAgent agent) {
-            logger.debug("Getting username from BankAgent: {}", agent.getUsername());
-            return agent.getUsername();
-        }
-        if (user instanceof Bank bank) {
-            logger.debug("Getting username from Bank: {}", bank.getUsername());
-            return bank.getUsername();
-        }
+        if (user instanceof Customer customer) return customer.getUsername();
+        if (user instanceof CompanyAgent agent) return agent.getUsername();
+        if (user instanceof BankAgent agent) return agent.getUsername();
+        if (user instanceof Bank bank) return bank.getUsername();
         logger.warn("Unknown user type for username: {}", user.getClass().getName());
         return null;
     }
@@ -327,24 +342,20 @@ public class AuthService {
     }
 
     private String getUserId(Object user) {
+        String id = null;
         if (user instanceof Customer customer) {
-            logger.debug("Getting ID from Customer: {}", customer.getId());
-            return customer.getId();
+            id = customer.getId();
+        } else if (user instanceof CompanyAgent agent) {
+            id = agent.getId();
+        } else if (user instanceof BankAgent agent) {
+            id = agent.getId();
+        } else if (user instanceof Bank bank) {
+            id = bank.getId();
         }
-        if (user instanceof CompanyAgent agent) {
-            logger.debug("Getting ID from CompanyAgent: {}", agent.getId());
-            return agent.getId();
-        }
-        if (user instanceof BankAgent agent) {
-            logger.debug("Getting ID from BankAgent: {}", agent.getId());
-            return agent.getId();
-        }
-        if (user instanceof Bank bank) {
-            logger.debug("Getting ID from Bank: {}", bank.getId());
-            return bank.getId();
-        }
-        logger.warn("Unknown user type: {}", user.getClass().getName());
-        return null;
+
+        logger.debug("getUserId - Type: {}, ID: {}",
+                user.getClass().getSimpleName(), id);
+        return id;
     }
 
     private LocalDate getCreatedAt(Object user) {
@@ -360,6 +371,8 @@ public class AuthService {
         else if (user instanceof CompanyAgent agent) agent.setId(id);
         else if (user instanceof BankAgent agent) agent.setId(id);
         else if (user instanceof Bank bank) bank.setId(id);
+        logger.debug("setUserId - Type: {}, ID set to: {}",
+                user.getClass().getSimpleName(), id);
     }
 
     private void setPassword(Object user, String password) {

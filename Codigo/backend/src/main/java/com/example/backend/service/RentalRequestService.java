@@ -254,8 +254,8 @@ public class RentalRequestService {
         if (request.getCustomer() != null) {
             CustomerSummaryDTO customerDTO = new CustomerSummaryDTO();
             customerDTO.setId(request.getCustomer().getId());
-            customerDTO.setName(request.getCustomer().getUsername());
-            customerDTO.setEmailContact(request.getCustomer().getEmail());
+            customerDTO.setUsername(request.getCustomer().getUsername());
+            customerDTO.setEmail(request.getCustomer().getEmail());
             dto.setCustomer(customerDTO);
         }
 

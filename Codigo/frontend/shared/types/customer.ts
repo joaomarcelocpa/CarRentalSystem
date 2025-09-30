@@ -1,3 +1,4 @@
+// Codigo/frontend/shared/types/customer.ts
 import {RentalRequestSummary} from "@/shared/types/summary";
 
 export interface Customer {
@@ -8,6 +9,7 @@ export interface Customer {
     cpf?: string;
     address?: string;
     profession?: string;
+    creditLimit?: number;
     createdAt?: string;
     rentalRequests?: RentalRequestSummary[];
 }
@@ -29,6 +31,7 @@ export interface CustomerResponseDTO {
     cpf?: string;
     address?: string;
     profession?: string;
+    creditLimit?: number;
     createdAt: string;
     rentalRequests?: RentalRequestSummary[];
 }

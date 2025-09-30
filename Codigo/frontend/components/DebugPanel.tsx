@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // app/components/DebugPanel.tsx (opcional para desenvolvimento)
 "use client"
 

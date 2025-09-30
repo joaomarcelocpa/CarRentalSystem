@@ -60,11 +60,28 @@ public class RentalRequestController {
             String username = authentication.getName();
             boolean isCustomer = authentication.getAuthorities().stream()
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_CUSTOMER"));
+            boolean isAgent = authentication.getAuthorities().stream()
+                    .anyMatch(auth -> auth.getAuthority().equals("ROLE_AGENT_COMPANY")
+                            || auth.getAuthority().equals("ROLE_AGENT_BANK"));
 
             if (isCustomer && !response.getCustomer().getName().equals(username)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         Map.of("error", "Você não tem permissão para visualizar este pedido")
                 );
+            }
+
+            if (isAgent) {
+                List<RentalRequestResponseDTO> agentRequests =
+                        rentalRequestService.findRequestsForAgentAutomobiles(username);
+
+                boolean isOwner = agentRequests.stream()
+                        .anyMatch(req -> req.getId().equals(id));
+
+                if (!isOwner) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
+                            Map.of("error", "Você não tem permissão para visualizar este pedido")
+                    );
+                }
             }
 
             return ResponseEntity.ok(response);
@@ -133,11 +150,23 @@ public class RentalRequestController {
             return ResponseEntity.badRequest().body(error);
         }
     }
+
+    // ==================== ENDPOINTS PARA AGENTES ====================
+    // MODIFICADO: Agora retorna apenas pedidos dos veículos do agente
+
     @GetMapping("/pending")
     @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
-    public ResponseEntity<List<RentalRequestResponseDTO>> getPendingRequests() {
-        List<RentalRequestResponseDTO> requests = rentalRequestService.findPendingRequests();
-        return ResponseEntity.ok(requests);
+    public ResponseEntity<List<RentalRequestResponseDTO>> getPendingRequests(
+            Authentication authentication) {
+        String username = authentication.getName();
+        List<RentalRequestResponseDTO> allRequests =
+                rentalRequestService.findRequestsForAgentAutomobiles(username);
+
+        List<RentalRequestResponseDTO> pendingRequests = allRequests.stream()
+                .filter(req -> req.getStatus().name().equals("PENDING"))
+                .toList();
+
+        return ResponseEntity.ok(pendingRequests);
     }
 
     @GetMapping("/agent/my-automobiles")
@@ -152,8 +181,11 @@ public class RentalRequestController {
 
     @GetMapping("/all")
     @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
-    public ResponseEntity<List<RentalRequestResponseDTO>> getAllRequests() {
-        List<RentalRequestResponseDTO> requests = rentalRequestService.findAllRequests();
+    public ResponseEntity<List<RentalRequestResponseDTO>> getAllRequests(
+            Authentication authentication) {
+        String username = authentication.getName();
+        List<RentalRequestResponseDTO> requests =
+                rentalRequestService.findRequestsForAgentAutomobiles(username);
         return ResponseEntity.ok(requests);
     }
 
@@ -173,6 +205,18 @@ public class RentalRequestController {
             String agentUsername = jwtTokenProvider.getUsernameFromToken(token);
             String agentId = jwtTokenProvider.getUserIdFromToken(token);
 
+            List<RentalRequestResponseDTO> agentRequests =
+                    rentalRequestService.findRequestsForAgentAutomobiles(agentUsername);
+
+            boolean isOwner = agentRequests.stream()
+                    .anyMatch(req -> req.getId().equals(id));
+
+            if (!isOwner) {
+                Map<String, String> error = new HashMap<>();
+                error.put("error", "Você não tem permissão para modificar este pedido");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+            }
+
             RentalRequestResponseDTO response =
                     rentalRequestService.updateRequestStatus(id, agentUsername, agentId, dto);
             return ResponseEntity.ok(response);
@@ -185,8 +229,11 @@ public class RentalRequestController {
 
     @GetMapping("/statistics")
     @PreAuthorize("hasRole('AGENT_COMPANY') or hasRole('AGENT_BANK')")
-    public ResponseEntity<Map<String, Object>> getStatistics() {
-        List<RentalRequestResponseDTO> allRequests = rentalRequestService.findAllRequests();
+    public ResponseEntity<Map<String, Object>> getStatistics(
+            Authentication authentication) {
+        String username = authentication.getName();
+        List<RentalRequestResponseDTO> allRequests =
+                rentalRequestService.findRequestsForAgentAutomobiles(username);
 
         Map<String, Object> stats = new HashMap<>();
         stats.put("total", allRequests.size());

@@ -1,44 +1,39 @@
 package com.example.backend.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.time.LocalDate;
 import java.util.List;
 
 public class CustomerResponseDTO {
     private String id;
-    private String name;
-    private String emailContact;
-    private String rg;
-    private String cpf;
-    private String address;
-    private String profession;
+    private String username;
+    private String email;
     private LocalDate createdAt;
-    private Double creditLimit;
 
+    private Double creditLimit;
     private List<RentalRequestSummaryDTO> rentalRequests;
+
+    // Campos removidos: rg, cpf, address, profession, emailContact
+    // Agora usa os campos herdados de User (username, email)
 
     public CustomerResponseDTO() {}
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getEmailContact() { return emailContact; }
-    public void setEmailContact(String emailContact) { this.emailContact = emailContact; }
-    public String getRg() { return rg; }
-    public void setRg(String rg) { this.rg = rg; }
-    public String getCpf() { return cpf; }
-    public void setCpf(String cpf) { this.cpf = cpf; }
-    public String getAddress() { return address; }
-    public void setAddress(String address) { this.address = address; }
-    public String getProfession() { return profession; }
-    public void setProfession(String profession) { this.profession = profession; }
+
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
     public LocalDate getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
+
     public Double getCreditLimit() { return creditLimit; }
     public void setCreditLimit(Double creditLimit) { this.creditLimit = creditLimit; }
 
     public List<RentalRequestSummaryDTO> getRentalRequests() { return rentalRequests; }
-    public void setRentalRequests(List<RentalRequestSummaryDTO> rentalRequests) { this.rentalRequests = rentalRequests; }
+    public void setRentalRequests(List<RentalRequestSummaryDTO> rentalRequests) {
+        this.rentalRequests = rentalRequests;
+    }
 }

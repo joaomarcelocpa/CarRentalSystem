@@ -4,6 +4,8 @@ import com.example.backend.dto.AutomobileCreateDTO;
 import com.example.backend.dto.AutomobileResponseDTO;
 import com.example.backend.model.Automobile;
 import com.example.backend.repository.AutomobileRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -13,6 +15,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class AutomobileService {
+    private static final Logger logger = LoggerFactory.getLogger(AutomobileService.class);
+
     private final AutomobileRepository repo;
 
     public AutomobileService(AutomobileRepository repo) { this.repo = repo; }
@@ -30,12 +34,18 @@ public class AutomobileService {
     }
 
     public List<AutomobileResponseDTO> findByCreatedByAgentUsername(String username) {
-        return repo.findByCreatedByAgentUsername(username).stream()
+        logger.info("Buscando veículos do agente: {}", username);
+        List<Automobile> automobiles = repo.findByCreatedByAgentUsername(username);
+        logger.info("Encontrados {} veículos para o agente {}", automobiles.size(), username);
+
+        return automobiles.stream()
                 .map(this::convertToResponseDTO)
                 .collect(Collectors.toList());
     }
 
     public AutomobileResponseDTO create(AutomobileCreateDTO createDTO, String agentId, String agentUsername) {
+        logger.info("Criando veículo - AgentId: {}, AgentUsername: {}", agentId, agentUsername);
+
         Automobile automobile = new Automobile();
         automobile.setId(UUID.randomUUID().toString());
         automobile.setLicensePlate(createDTO.getLicensePlate());
@@ -47,10 +57,19 @@ public class AutomobileService {
         automobile.setAvailable(true);
         automobile.setCreatedAt(LocalDate.now());
 
+        // CORRIGIDO: Garantir que os IDs do agente sejam salvos
         automobile.setCreatedByAgentId(agentId);
         automobile.setCreatedByAgentUsername(agentUsername);
 
-        return convertToResponseDTO(repo.save(automobile));
+        logger.info("Salvando veículo com dados: ID={}, AgentId={}, AgentUsername={}",
+                automobile.getId(), automobile.getCreatedByAgentId(), automobile.getCreatedByAgentUsername());
+
+        Automobile saved = repo.save(automobile);
+
+        logger.info("Veículo salvo com sucesso - ID: {}, CreatedByAgentId: {}, CreatedByAgentUsername: {}",
+                saved.getId(), saved.getCreatedByAgentId(), saved.getCreatedByAgentUsername());
+
+        return convertToResponseDTO(saved);
     }
 
     public AutomobileResponseDTO update(String id, AutomobileCreateDTO updateDTO) {
@@ -61,11 +80,18 @@ public class AutomobileService {
             existing.setYear(updateDTO.getYear());
             existing.setRegistration(updateDTO.getRegistration());
             existing.setDailyRate(updateDTO.getDailyRate());
+
+            // NÃO alterar os campos de criação no update
+            // existing.setCreatedByAgentId(...) - MANTER o original
+            // existing.setCreatedByAgentUsername(...) - MANTER o original
+
             return convertToResponseDTO(repo.save(existing));
         }).orElse(null);
     }
 
-    public void delete(String id) { repo.deleteById(id); }
+    public void delete(String id) {
+        repo.deleteById(id);
+    }
 
     private AutomobileResponseDTO convertToResponseDTO(Automobile automobile) {
         AutomobileResponseDTO dto = new AutomobileResponseDTO();
@@ -79,8 +105,12 @@ public class AutomobileService {
         dto.setDailyRate(automobile.getDailyRate());
         dto.setCreatedAt(automobile.getCreatedAt());
 
+        // IMPORTANTE: Incluir os campos do agente no DTO
         dto.setCreatedByAgentId(automobile.getCreatedByAgentId());
         dto.setCreatedByAgentUsername(automobile.getCreatedByAgentUsername());
+
+        logger.debug("Convertendo automobile {} - AgentId: {}, AgentUsername: {}",
+                automobile.getId(), automobile.getCreatedByAgentId(), automobile.getCreatedByAgentUsername());
 
         return dto;
     }

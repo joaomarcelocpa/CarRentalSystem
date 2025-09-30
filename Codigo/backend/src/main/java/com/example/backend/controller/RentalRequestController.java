@@ -64,7 +64,7 @@ public class RentalRequestController {
                     .anyMatch(auth -> auth.getAuthority().equals("ROLE_AGENT_COMPANY")
                             || auth.getAuthority().equals("ROLE_AGENT_BANK"));
 
-            if (isCustomer && !response.getCustomer().getName().equals(username)) {
+            if (isCustomer && !response.getCustomer().getUsername().equals(username)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
                         Map.of("error", "Você não tem permissão para visualizar este pedido")
                 );

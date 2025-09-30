@@ -2,7 +2,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/shared/contexts/AuthContext";
 import { ApiService } from "@/shared/services";
@@ -44,36 +44,33 @@ const RentalRequestsPage: React.FC = () => {
   const isAgent =
     user?.userType === "agente-empresa" || user?.userType === "agente-banco";
 
-  const fetchRequests = async () => {
-    try {
-      setLoading(true);
-      let fetchedRequests: RentalRequest[];
+const fetchRequests = useCallback(async () => {
+  try {
+    setLoading(true);
+    let fetchedRequests: RentalRequest[];
 
-      if (user?.userType === "cliente") {
-        // Para clientes, buscar apenas suas solicitações
-        fetchedRequests = await ApiService.rentalRequest.getMyRequests();
-      } else {
-        // Para agentes, buscar todas as solicitações
-        fetchedRequests = await ApiService.rentalRequest.getAllRentalRequests();
-      }
-
-      setRequests(fetchedRequests);
-
-      // Selecionar a primeira solicitação automaticamente
-      if (fetchedRequests.length > 0) {
-        setSelectedRequest(fetchedRequests[0]);
-      }
-    } catch (err) {
-      console.error("Error fetching requests:", err);
-      setError("Erro ao carregar solicitações.");
-    } finally {
-      setLoading(false);
+    if (user?.userType === "cliente") {
+      fetchedRequests = await ApiService.rentalRequest.getMyRequests();
+    } else {
+      fetchedRequests = await ApiService.rentalRequest.getAllRentalRequests();
     }
-  };
 
-  useEffect(() => {
-    fetchRequests();
-  }, [fetchRequests]);
+    setRequests(fetchedRequests);
+
+    if (fetchedRequests.length > 0) {
+      setSelectedRequest(fetchedRequests[0]);
+    }
+  } catch (err) {
+    console.error("Error fetching requests:", err);
+    setError("Erro ao carregar solicitações.");
+  } finally {
+    setLoading(false);
+  }
+}, [user]);
+
+useEffect(() => {
+  fetchRequests();
+}, [fetchRequests]);
 
   const handleStatusChange = async (
     requestId: string,

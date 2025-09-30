@@ -110,7 +110,11 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
       return;
     }
 
-    if (start < new Date()) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    start.setHours(0, 0, 0, 0);
+
+    if (start < today) {
       setError("A data de retirada não pode ser anterior a hoje");
       return;
     }

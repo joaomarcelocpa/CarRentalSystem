@@ -1,7 +1,7 @@
 package com.example.backend.dto;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -38,6 +38,7 @@ public class CustomerResponseDTO {
     public void setCreatedAt(LocalDate createdAt) { this.createdAt = createdAt; }
     public Double getCreditLimit() { return creditLimit; }
     public void setCreditLimit(Double creditLimit) { this.creditLimit = creditLimit; }
+
     public List<RentalRequestSummaryDTO> getRentalRequests() { return rentalRequests; }
     public void setRentalRequests(List<RentalRequestSummaryDTO> rentalRequests) { this.rentalRequests = rentalRequests; }
 }

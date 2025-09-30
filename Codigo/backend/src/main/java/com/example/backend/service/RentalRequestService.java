@@ -63,15 +63,15 @@ public class RentalRequestService {
         request.setCreatedAt(LocalDate.now());
         request.calculateTotalValue();
 
-        Double creditLimit = customer.getCreditLimit();
+        Double credit_limit = customer.getCreditLimit();
         Double totalValue = request.getTotalValue();
 
-        if (creditLimit == null || creditLimit == 0.0) {
+        if (credit_limit == null || credit_limit == 0.0) {
             request.setStatus(RequestStatus.PENDING);
-        } else if (totalValue > creditLimit) {
+        } else if (totalValue > credit_limit) {
             request.setStatus(RequestStatus.REJECTED);
             request.setRejectionReason("Valor do pedido (R$ " + String.format("%.2f", totalValue) +
-                    ") ultrapassa o limite de crédito aprovado (R$ " + String.format("%.2f", creditLimit) + ")");
+                    ") ultrapassa o limite de crédito aprovado (R$ " + String.format("%.2f", credit_limit) + ")");
             request.setProcessedByAgentUsername("SISTEMA");
             request.setProcessedByAgentId("AUTO");
             request.setProcessedAt(LocalDate.now());

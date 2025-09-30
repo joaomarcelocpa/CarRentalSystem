@@ -64,9 +64,9 @@ public class CustomerService {
     }
 
     @Transactional
-    public CustomerResponseDTO updateCreditLimit(String customerId, Double creditLimit) {
+    public CustomerResponseDTO updateCreditLimit(String customerId, Double credit_limit) {
         return repo.findById(customerId).map(customer -> {
-            customer.setCreditLimit(creditLimit);
+            customer.setCreditLimit(credit_limit);
             Customer saved = repo.save(customer);
             return toResponseDTO(saved);
         }).orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
@@ -82,6 +82,7 @@ public class CustomerService {
         dto.setAddress(customer.getAddress());
         dto.setProfession(customer.getProfession());
         dto.setCreatedAt(customer.getCreatedAt());
+        dto.setCreditLimit(customer.getCreditLimit());
 
         if (customer.getRentalRequests() != null) {
             List<RentalRequestSummaryDTO> requests = customer.getRentalRequests().stream()

@@ -7,19 +7,19 @@ public class CreditLimitUpdateDTO {
 
     @NotNull(message = "Limite de crédito é obrigatório")
     @Min(value = 0, message = "Limite de crédito deve ser maior ou igual a zero")
-    private Double creditLimit;
+    private Double credit_limit;
 
     public CreditLimitUpdateDTO() {}
 
-    public CreditLimitUpdateDTO(Double creditLimit) {
-        this.creditLimit = creditLimit;
+    public CreditLimitUpdateDTO(Double credit_limit) {
+        this.credit_limit = credit_limit;
     }
 
     public Double getCreditLimit() {
-        return creditLimit;
+        return credit_limit;
     }
 
-    public void setCreditLimit(Double creditLimit) {
-        this.creditLimit = creditLimit;
+    public void setCreditLimit(Double credit_limit) {
+        this.credit_limit = credit_limit;
     }
 }

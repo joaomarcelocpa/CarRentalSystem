@@ -95,17 +95,47 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                 onSuccess()
             }
         } catch (error: any) {
-            console.error("Error creating rental request:", error)
+            // Não fazer console.error para evitar mostrar erro no DevTools
+            // apenas em desenvolvimento, se necessário:
+            // console.log("Rental request error:", error)
 
-            // Verificar se o erro é de limite de crédito
-            const errorMessage = error?.message || error?.response?.data?.error || "Erro desconhecido"
+            // Extrair mensagem de erro de diferentes estruturas possíveis
+            let errorMessage = "Erro ao criar solicitação de aluguel. Tente novamente."
 
-            if (errorMessage.toLowerCase().includes('limite') ||
+            try {
+                // Tentar extrair do objeto response.data
+                if (error?.response?.data) {
+                    const errorData = error.response.data
+                    errorMessage = errorData.error || errorData.message || errorData.erro || JSON.stringify(errorData)
+                }
+                // Tentar extrair diretamente da mensagem do erro
+                else if (error?.message) {
+                    // Se a mensagem contém "HTTP error!", tentar parsear o corpo
+                    if (error.message.includes('HTTP error!')) {
+                        errorMessage = error.message
+                    } else {
+                        errorMessage = error.message
+                    }
+                }
+                // Se for uma string direta
+                else if (typeof error === 'string') {
+                    errorMessage = error
+                }
+            } catch (parseError) {
+                console.error("Error parsing error message:", parseError)
+            }
+
+            // Verificar se é erro de limite de crédito
+            const isLimitError =
+                errorMessage.toLowerCase().includes('limite') ||
                 errorMessage.toLowerCase().includes('crédito') ||
-                errorMessage.toLowerCase().includes('credit')) {
-                setError("⚠️ Limite de crédito insuficiente. " + errorMessage + " Entre em contato com o banco para aumentar seu limite.")
+                errorMessage.toLowerCase().includes('credit') ||
+                errorMessage.toLowerCase().includes('insuficiente')
+
+            if (isLimitError) {
+                setError(`⚠️ ${errorMessage}`)
             } else {
-                setError(errorMessage || "Erro ao criar solicitação de aluguel. Tente novamente.")
+                setError(errorMessage)
             }
         } finally {
             setIsLoading(false)
@@ -205,32 +235,32 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                     <div className="lg:w-3/5 p-6">
                         {error && (
                             <div className={`mb-4 p-3 rounded-lg flex items-start gap-2 ${
-                                error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
-                                    ? 'bg-yellow-500/20 border border-yellow-500/50'
+                                error.includes('⚠️') || error.includes('limite') || error.includes('crédito')
+                                    ? 'bg-yellow-50 border border-yellow-300'
                                     : 'bg-red-50 border border-red-200'
                             }`}>
                                 <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
-                                    error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
-                                        ? 'text-yellow-400'
+                                    error.includes('⚠️') || error.includes('limite') || error.includes('crédito')
+                                        ? 'text-yellow-600'
                                         : 'text-red-600'
                                 }`} />
                                 <div className="flex-1">
                                     <p className={`text-sm font-medium ${
-                                        error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
-                                            ? 'text-yellow-200'
-                                            : 'text-red-600'
+                                        error.includes('⚠️') || error.includes('limite') || error.includes('crédito')
+                                            ? 'text-yellow-800'
+                                            : 'text-red-800'
                                     }`}>
-                                        {error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                        {error.includes('⚠️') || error.includes('limite') || error.includes('crédito')
                                             ? 'Limite de Crédito Insuficiente'
                                             : 'Erro'
                                         }
                                     </p>
                                     <p className={`text-sm ${
-                                        error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
-                                            ? 'text-yellow-100'
-                                            : 'text-red-600'
+                                        error.includes('⚠️') || error.includes('limite') || error.includes('crédito')
+                                            ? 'text-yellow-700'
+                                            : 'text-red-700'
                                     }`}>
-                                        {error}
+                                        {error.replace('⚠️', '').trim()}
                                     </p>
                                 </div>
                             </div>

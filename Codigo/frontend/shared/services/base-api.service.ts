@@ -15,7 +15,7 @@ export class BaseApiService {
 
         // Verificar se há token de autenticação
         const token = localStorage.getItem('auth_token');
-        
+
         const defaultOptions: RequestInit = {
             headers: {
                 'Content-Type': 'application/json',
@@ -27,10 +27,58 @@ export class BaseApiService {
         try {
             const response = await fetch(url, { ...defaultOptions, ...options });
 
+            // Se não for OK, extrair mensagem de erro do backend
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                let errorMessage = `HTTP error! status: ${response.status}`;
+                let errorData: any = null;
+
+                try {
+                    // Tentar ler como JSON primeiro
+                    const responseText = await response.text();
+
+                    if (responseText) {
+                        try {
+                            errorData = JSON.parse(responseText);
+
+                            // Tentar extrair mensagem de diferentes estruturas de erro
+                            if (errorData.message) {
+                                errorMessage = errorData.message;
+                            } else if (errorData.error) {
+                                errorMessage = errorData.error;
+                            } else if (errorData.erro) {
+                                errorMessage = errorData.erro;
+                            } else if (errorData.errors && Array.isArray(errorData.errors)) {
+                                errorMessage = errorData.errors.join(', ');
+                            } else if (typeof errorData === 'string') {
+                                errorMessage = errorData;
+                            }
+                        } catch (parseError) {
+                            // Se não for JSON válido, usar o texto como mensagem
+                            errorMessage = responseText;
+                        }
+                    }
+                } catch (e) {
+                    // Silenciar erro de leitura, usar mensagem padrão
+                }
+
+                // Criar objeto de erro customizado sem usar Error()
+                // Isso evita que o Next.js mostre o erro no console
+                const customError: any = {
+                    message: errorMessage,
+                    status: response.status,
+                    response: {
+                        data: errorData || {
+                            message: errorMessage,
+                            error: errorMessage
+                        }
+                    }
+                };
+
+                // Rejeitar a promise com o objeto customizado
+                return Promise.reject(customError);
             }
 
+            // Se for 204 ou sem conteúdo, retornar objeto vazio
             if (response.status === 204 || response.headers.get('content-length') === '0') {
                 return {} as T;
             }

@@ -31,12 +31,12 @@ const ActionButtons: React.FC = () => {
         router.push('/rental-requests')
     }
 
-    const handleCreditContract = () => {
-        alert("Funcionalidade de contrato de crédito será implementada em breve!")
-    }
-
     const handleManageAutomobiles = () => {
         router.push('/automobile-management')
+    }
+
+    const handleCreditManagement = () => {
+        router.push('/credit-management')
     }
 
     const getButtonsForUserType = (userType: UserType) => {
@@ -111,10 +111,10 @@ const ActionButtons: React.FC = () => {
                         action: handleManageAutomobiles
                     },
                     {
-                        id: "credit-contract",
-                        label: "Conceder Contrato de Crédito",
+                        id: "credit-management",
+                        label: "Gerenciar Crédito",
                         icon: CreditCard,
-                        action: handleCreditContract
+                        action: handleCreditManagement
                     },
                     ...baseButtons,
                 ]

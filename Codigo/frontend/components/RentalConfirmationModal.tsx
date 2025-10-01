@@ -14,8 +14,6 @@ import {
     Users,
     Cog,
     Shield,
-    Phone,
-    Mail,
     AlertCircle
 } from "lucide-react"
 import { formatCurrency, safeNumber } from "@/shared/utils/type-guards"
@@ -98,7 +96,17 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
             }
         } catch (error: any) {
             console.error("Error creating rental request:", error)
-            setError(error?.message || "Erro ao criar solicitação de aluguel. Tente novamente.")
+
+            // Verificar se o erro é de limite de crédito
+            const errorMessage = error?.message || error?.response?.data?.error || "Erro desconhecido"
+
+            if (errorMessage.toLowerCase().includes('limite') ||
+                errorMessage.toLowerCase().includes('crédito') ||
+                errorMessage.toLowerCase().includes('credit')) {
+                setError("⚠️ Limite de crédito insuficiente. " + errorMessage + " Entre em contato com o banco para aumentar seu limite.")
+            } else {
+                setError(errorMessage || "Erro ao criar solicitação de aluguel. Tente novamente.")
+            }
         } finally {
             setIsLoading(false)
         }
@@ -196,9 +204,35 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                     {/* Form - Right Side */}
                     <div className="lg:w-3/5 p-6">
                         {error && (
-                            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-start gap-2">
-                                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                                <p className="text-red-600 text-sm">{error}</p>
+                            <div className={`mb-4 p-3 rounded-lg flex items-start gap-2 ${
+                                error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                    ? 'bg-yellow-500/20 border border-yellow-500/50'
+                                    : 'bg-red-50 border border-red-200'
+                            }`}>
+                                <AlertCircle className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+                                    error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                        ? 'text-yellow-400'
+                                        : 'text-red-600'
+                                }`} />
+                                <div className="flex-1">
+                                    <p className={`text-sm font-medium ${
+                                        error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                            ? 'text-yellow-200'
+                                            : 'text-red-600'
+                                    }`}>
+                                        {error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                            ? 'Limite de Crédito Insuficiente'
+                                            : 'Erro'
+                                        }
+                                    </p>
+                                    <p className={`text-sm ${
+                                        error.includes('limite') || error.includes('crédito') || error.includes('⚠️')
+                                            ? 'text-yellow-100'
+                                            : 'text-red-600'
+                                    }`}>
+                                        {error}
+                                    </p>
+                                </div>
                             </div>
                         )}
 
@@ -253,6 +287,14 @@ const RentalConfirmationModal: React.FC<RentalConfirmationModalProps> = ({
                                             <div className="flex justify-between items-center">
                                                 <span className="text-base font-semibold text-blue-800">Total Estimado</span>
                                                 <span className="text-xl font-bold text-blue-800">{formatCurrency(estimatedValue)}</span>
+                                            </div>
+                                        </div>
+                                        <div className="mt-3 pt-3 border-t border-blue-200">
+                                            <div className="flex items-center gap-2 text-xs text-blue-700">
+                                                <AlertCircle className="w-4 h-4" />
+                                                <span>
+                                                    Para carros de bancos, será verificado seu limite de crédito disponível
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

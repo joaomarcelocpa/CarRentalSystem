@@ -4,7 +4,7 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { useAuth } from "@/shared/contexts/AuthContext"
-import { ApiService } from "../../shared/services"
+import { ApiService } from "@/shared/services"
 import { User, Eye, EyeOff, ArrowLeft } from "lucide-react"
 import { safeString } from "@/shared/utils/type-guards"
 import Link from "next/link"
@@ -148,18 +148,18 @@ const EditProfilePage: React.FC = () => {
         router.push('/')
     }
 
-    const getUserTypeLabel = (userType: string) => {
-        switch (userType) {
-            case 'cliente':
-                return 'Cliente'
-            case 'agente-empresa':
-                return 'Agente Empresa'
-            case 'agente-banco':
-                return 'Agente Banco'
-            default:
-                return 'Usuário'
-        }
-    }
+    // const getUserTypeLabel = (userType: string) => {
+    //     switch (userType) {
+    //         case 'cliente':
+    //             return 'Cliente'
+    //         case 'agente-empresa':
+    //             return 'Agente Empresa'
+    //         case 'agente-banco':
+    //             return 'Agente Banco'
+    //         default:
+    //             return 'Usuário'
+    //     }
+    // }
 
     // Se não há usuário, não renderizar nada (redirecionamento vai acontecer)
     if (!user) {

@@ -4,45 +4,132 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "credit_contract")
 public class CreditContract {
     @Id
     private String id;
 
-    @Column(name = "contract_value")
-    private Double value;
+    @ManyToOne
+    @JoinColumn(name = "customer_id", nullable = false)
+    private Customer customer;
 
-    private Double interestRate;
+    @ManyToOne
+    @JoinColumn(name = "bank_agent_id", nullable = false)
+    private BankAgent bankAgent;
 
-    private Integer term;
+    @Column(name = "credit_limit", nullable = false)
+    private Double creditLimit;
 
-    private LocalDate grantDate;
+    @Column(name = "available_limit", nullable = false)
+    private Double availableLimit;
 
-    private String status;
+    @Column(name = "created_at")
+    private LocalDate createdAt;
 
-    @OneToOne
-    @JoinColumn(name = "rental_request_id")
-    private RentalRequest rentalRequest;
+    @Column(name = "updated_at")
+    private LocalDate updatedAt;
 
-    public CreditContract() {}
+    @Column(name = "status")
+    private String status; // ACTIVE, INACTIVE, SUSPENDED
 
-    public Double calculateInstallment() {
-        if (interestRate == null || term == null || term == 0 || value == null) return 0.0;
-        double monthlyRate = interestRate / 100.0;
-        return (value * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -term));
+    public CreditContract() {
+        this.status = "ACTIVE";
+        this.createdAt = LocalDate.now();
+        this.updatedAt = LocalDate.now();
     }
 
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-    public Double getValue() { return value; }
-    public void setValue(Double value) { this.value = value; }
-    public Double getInterestRate() { return interestRate; }
-    public void setInterestRate(Double interestRate) { this.interestRate = interestRate; }
-    public Integer getTerm() { return term; }
-    public void setTerm(Integer term) { this.term = term; }
-    public LocalDate getGrantDate() { return grantDate; }
-    public void setGrantDate(LocalDate grantDate) { this.grantDate = grantDate; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public RentalRequest getRentalRequest() { return rentalRequest; }
-    public void setRentalRequest(RentalRequest rentalRequest) { this.rentalRequest = rentalRequest; }
+    // Verifica se há limite disponível suficiente
+    public boolean hasAvailableLimit(Double amount) {
+        if (amount == null || availableLimit == null) return false;
+        return availableLimit >= amount;
+    }
+
+    // Reduz o limite disponível quando um pedido é aprovado
+    public void reduceAvailableLimit(Double amount) {
+        if (amount != null && availableLimit != null) {
+            this.availableLimit = Math.max(0, this.availableLimit - amount);
+            this.updatedAt = LocalDate.now();
+        }
+    }
+
+    // Restaura o limite disponível quando um pedido é cancelado/rejeitado
+    public void restoreAvailableLimit(Double amount) {
+        if (amount != null && availableLimit != null && creditLimit != null) {
+            this.availableLimit = Math.min(creditLimit, this.availableLimit + amount);
+            this.updatedAt = LocalDate.now();
+        }
+    }
+
+    // Getters e Setters
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public Customer getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(Customer customer) {
+        this.customer = customer;
+    }
+
+    public BankAgent getBankAgent() {
+        return bankAgent;
+    }
+
+    public void setBankAgent(BankAgent bankAgent) {
+        this.bankAgent = bankAgent;
+    }
+
+    public Double getCreditLimit() {
+        return creditLimit;
+    }
+
+    public void setCreditLimit(Double creditLimit) {
+        this.creditLimit = creditLimit;
+        // Quando o limite é atualizado, ajusta o limite disponível proporcionalmente
+        if (this.availableLimit != null && creditLimit != null) {
+            this.availableLimit = Math.min(this.availableLimit, creditLimit);
+        } else {
+            this.availableLimit = creditLimit;
+        }
+        this.updatedAt = LocalDate.now();
+    }
+
+    public Double getAvailableLimit() {
+        return availableLimit;
+    }
+
+    public void setAvailableLimit(Double availableLimit) {
+        this.availableLimit = availableLimit;
+    }
+
+    public LocalDate getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDate createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDate getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDate updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+        this.updatedAt = LocalDate.now();
+    }
 }

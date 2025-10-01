@@ -387,4 +387,28 @@ public class UserService implements UserDetailsService {
                 bank.getCreatedAt()
         );
     }
+
+    public Optional<UserResponseDTO> findByUsername(String username) {
+        Optional<Customer> customer = customerRepository.findByUsername(username);
+        if (customer.isPresent()) {
+            return Optional.of(convertCustomerToResponseDTO(customer.get()));
+        }
+
+        Optional<CompanyAgent> companyAgent = companyAgentRepository.findByUsername(username);
+        if (companyAgent.isPresent()) {
+            return Optional.of(convertCompanyAgentToResponseDTO(companyAgent.get()));
+        }
+
+        Optional<BankAgent> bankAgent = bankAgentRepository.findByUsername(username);
+        if (bankAgent.isPresent()) {
+            return Optional.of(convertBankAgentToResponseDTO(bankAgent.get()));
+        }
+
+        Optional<Bank> bank = bankRepository.findByUsername(username);
+        if (bank.isPresent()) {
+            return Optional.of(convertBankToResponseDTO(bank.get()));
+        }
+
+        return Optional.empty();
+    }
 }

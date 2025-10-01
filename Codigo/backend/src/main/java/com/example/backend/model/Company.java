@@ -26,9 +26,4 @@ public class Company {
     public void setSector(String sector) {
         this.sector = sector;
     }
-
-    public boolean evaluateRentalRequest(RentalRequest request) {
-        // CORRIGIDO: usar getTotalValue() ao invés de getEstimatedValue()
-        return request != null && request.getTotalValue() != null && request.getTotalValue() < 10000;
-    }
 }

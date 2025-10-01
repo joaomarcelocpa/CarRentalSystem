@@ -5,9 +5,12 @@ import com.example.backend.model.Automobile;
 import com.example.backend.model.Customer;
 import com.example.backend.model.RentalRequest;
 import com.example.backend.model.enums.RequestStatus;
+import com.example.backend.model.enums.UserRole;
 import com.example.backend.repository.AutomobileRepository;
 import com.example.backend.repository.CustomerRepository;
 import com.example.backend.repository.RentalRequestRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,21 +22,33 @@ import java.util.stream.Collectors;
 @Service
 public class RentalRequestService {
 
+    private static final Logger logger = LoggerFactory.getLogger(RentalRequestService.class);
+
     private final RentalRequestRepository rentalRequestRepository;
     private final CustomerRepository customerRepository;
     private final AutomobileRepository automobileRepository;
+    private final CreditContractService creditContractService;
+    private final UserService userService;
 
     public RentalRequestService(
             RentalRequestRepository rentalRequestRepository,
             CustomerRepository customerRepository,
-            AutomobileRepository automobileRepository) {
+            AutomobileRepository automobileRepository,
+            CreditContractService creditContractService,
+            UserService userService) {
         this.rentalRequestRepository = rentalRequestRepository;
         this.customerRepository = customerRepository;
         this.automobileRepository = automobileRepository;
+        this.creditContractService = creditContractService;
+        this.userService = userService;
     }
 
+    /**
+     * Cria um novo pedido de aluguel com verificação de limite de crédito
+     */
     @Transactional
     public RentalRequestResponseDTO createRequest(String customerUsername, RentalRequestCreateDTO dto) {
+        // Validações básicas de data
         if (dto.getReturnDate().isBefore(dto.getPickupDate())) {
             throw new IllegalArgumentException("Data de devolução deve ser posterior à data de retirada");
         }
@@ -42,9 +57,11 @@ public class RentalRequestService {
             throw new IllegalArgumentException("Data de retirada deve ser no presente ou futuro");
         }
 
+        // Buscar cliente
         Customer customer = customerRepository.findByUsername(customerUsername)
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado"));
 
+        // Buscar automóvel
         Automobile automobile = automobileRepository.findById(dto.getAutomobileId())
                 .orElseThrow(() -> new IllegalArgumentException("Automóvel não encontrado"));
 
@@ -52,6 +69,45 @@ public class RentalRequestService {
             throw new IllegalArgumentException("Automóvel não está disponível");
         }
 
+        // Criar o pedido temporariamente para calcular o valor
+        RentalRequest tempRequest = new RentalRequest();
+        tempRequest.setAutomobile(automobile);
+        tempRequest.setPickupDate(dto.getPickupDate());
+        tempRequest.setReturnDate(dto.getReturnDate());
+        tempRequest.calculateTotalValue();
+
+        Double totalValue = tempRequest.getTotalValue();
+
+        // NOVA LÓGICA: Verificar se o carro pertence a um agente bancário
+        String carOwnerUsername = automobile.getCreatedByAgentUsername();
+
+        if (carOwnerUsername != null) {
+            // Buscar informações do dono do carro
+            UserResponseDTO carOwner = userService.findByUsername(carOwnerUsername)
+                    .orElse(null);
+
+            // Se o dono é um agente bancário, verificar limite de crédito
+            if (carOwner != null && carOwner.getRole() == UserRole.AGENT_BANK) {
+                logger.info("Carro pertence a agente bancário {}. Verificando limite de crédito...",
+                        carOwnerUsername);
+
+                boolean hasCredit = creditContractService.hasAvailableCredit(
+                        customerUsername, carOwnerUsername, totalValue);
+
+                if (!hasCredit) {
+                    logger.warn("Cliente {} não possui limite de crédito suficiente. Valor necessário: {}",
+                            customerUsername, totalValue);
+                    throw new IllegalArgumentException(
+                            "Limite de crédito insuficiente. Entre em contato com o banco para aumentar seu limite.");
+                }
+
+                logger.info("Cliente {} possui limite de crédito suficiente", customerUsername);
+            } else {
+                logger.info("Carro pertence a agente empresa ou owner não encontrado. Não há verificação de crédito.");
+            }
+        }
+
+        // Criar o pedido definitivo
         RentalRequest request = new RentalRequest();
         request.setId(UUID.randomUUID().toString());
         request.setCustomer(customer);
@@ -63,10 +119,14 @@ public class RentalRequestService {
         request.setCreatedAt(LocalDate.now());
         request.calculateTotalValue();
 
+        // Marcar carro como indisponível
         automobile.setAvailable(false);
         automobileRepository.save(automobile);
 
         RentalRequest savedRequest = rentalRequestRepository.save(request);
+
+        logger.info("Pedido criado com sucesso: {}", savedRequest.getId());
+
         return convertToResponseDTO(savedRequest);
     }
 
@@ -143,6 +203,9 @@ public class RentalRequestService {
         return convertToResponseDTO(updatedRequest);
     }
 
+    /**
+     * Atualiza o status de um pedido com gerenciamento de limite de crédito
+     */
     @Transactional
     public RentalRequestResponseDTO updateRequestStatus(
             String id,
@@ -161,15 +224,53 @@ public class RentalRequestService {
             throw new IllegalArgumentException("Pedido já foi cancelado");
         }
 
-        request.changeStatus(dto.getStatus(), agentId, agentUsername);
+        RequestStatus oldStatus = request.getStatus();
+        RequestStatus newStatus = dto.getStatus();
 
-        if (dto.getStatus() == RequestStatus.REJECTED && dto.getRejectionReason() != null) {
+        // Atualizar status do pedido
+        request.changeStatus(newStatus, agentId, agentUsername);
+
+        if (newStatus == RequestStatus.REJECTED && dto.getRejectionReason() != null) {
             request.setRejectionReason(dto.getRejectionReason());
         }
 
         Automobile automobile = request.getAutomobile();
+        String carOwnerUsername = automobile.getCreatedByAgentUsername();
 
-        switch (dto.getStatus()) {
+        // Verificar se o carro pertence a um agente bancário
+        if (carOwnerUsername != null) {
+            UserResponseDTO carOwner = userService.findByUsername(carOwnerUsername).orElse(null);
+
+            if (carOwner != null && carOwner.getRole() == UserRole.AGENT_BANK) {
+                String customerUsername = request.getCustomer().getUsername();
+                Double totalValue = request.getTotalValue();
+
+                // Gerenciar limite de crédito baseado na mudança de status
+                if (newStatus == RequestStatus.APPROVED || newStatus == RequestStatus.ACTIVE) {
+                    // Se estava pendente e foi aprovado, reduz o limite
+                    if (oldStatus == RequestStatus.PENDING || oldStatus == RequestStatus.UNDER_ANALYSIS) {
+                        logger.info("Reduzindo limite de crédito - Pedido aprovado/ativo");
+                        creditContractService.reduceAvailableLimit(
+                                customerUsername, carOwnerUsername, totalValue);
+                    }
+                } else if (newStatus == RequestStatus.REJECTED ||
+                        newStatus == RequestStatus.CANCELLED ||
+                        newStatus == RequestStatus.COMPLETED) {
+                    // Se o pedido foi cancelado/rejeitado/concluído, restaura o limite
+                    // Mas só se antes estava em um estado que tinha consumido o limite
+                    if (oldStatus == RequestStatus.APPROVED ||
+                            oldStatus == RequestStatus.ACTIVE ||
+                            oldStatus == RequestStatus.UNDER_ANALYSIS) {
+                        logger.info("Restaurando limite de crédito - Pedido {}", newStatus);
+                        creditContractService.restoreAvailableLimit(
+                                customerUsername, carOwnerUsername, totalValue);
+                    }
+                }
+            }
+        }
+
+        // Gerenciar disponibilidade do automóvel
+        switch (newStatus) {
             case APPROVED:
             case UNDER_ANALYSIS:
             case ACTIVE:
@@ -187,11 +288,16 @@ public class RentalRequestService {
         }
 
         automobileRepository.save(automobile);
-
         RentalRequest updatedRequest = rentalRequestRepository.save(request);
+
+        logger.info("Status do pedido {} atualizado: {} -> {}", id, oldStatus, newStatus);
+
         return convertToResponseDTO(updatedRequest);
     }
 
+    /**
+     * Cancela um pedido (cliente)
+     */
     @Transactional
     public RentalRequestResponseDTO cancelRequest(String id, String customerUsername) {
         RentalRequest request = rentalRequestRepository.findById(id)
@@ -206,16 +312,36 @@ public class RentalRequestService {
                     request.getStatus().getDescription());
         }
 
+        RequestStatus oldStatus = request.getStatus();
         request.setStatus(RequestStatus.CANCELLED);
 
         Automobile automobile = request.getAutomobile();
         automobile.setAvailable(true);
         automobileRepository.save(automobile);
 
+        // Restaurar limite de crédito se aplicável
+        String carOwnerUsername = automobile.getCreatedByAgentUsername();
+        if (carOwnerUsername != null) {
+            UserResponseDTO carOwner = userService.findByUsername(carOwnerUsername).orElse(null);
+
+            if (carOwner != null && carOwner.getRole() == UserRole.AGENT_BANK) {
+                if (oldStatus == RequestStatus.APPROVED ||
+                        oldStatus == RequestStatus.ACTIVE ||
+                        oldStatus == RequestStatus.UNDER_ANALYSIS) {
+                    logger.info("Restaurando limite de crédito - Pedido cancelado pelo cliente");
+                    creditContractService.restoreAvailableLimit(
+                            customerUsername, carOwnerUsername, request.getTotalValue());
+                }
+            }
+        }
+
         RentalRequest updatedRequest = rentalRequestRepository.save(request);
         return convertToResponseDTO(updatedRequest);
     }
 
+    /**
+     * Deleta um pedido (apenas pendentes)
+     */
     @Transactional
     public void deleteRequest(String id, String customerUsername) {
         RentalRequest request = rentalRequestRepository.findById(id)
